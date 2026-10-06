@@ -2,7 +2,7 @@
 
 Standalone Awin Affiliate Skill for GamerHQ-compatible hosts.
 
-> Early development: the first vertical slice focuses on importing Awin banner HTML into a normalized Creative Library without requiring real credentials.
+> Early development: account setup and publisher discovery are now implemented on top of the Creative Library foundation.
 
 ## Goals
 
@@ -20,27 +20,34 @@ This repository is an independent GamerHQ Skill package. It may use public Skill
 
 Shared runtime primitives such as storage and scheduling may be used internally without introducing a dependency on another Skill.
 
-## Current vertical slice
+## Current vertical slices
 
-The initial implementation covers:
+The implementation currently covers:
 
-1. parsing supported Awin HTML banner snippets,
-2. validating Awin tracking/image URLs,
-3. normalizing them into Creative records,
-4. deduplicating imports,
-5. persisting a per-guild Creative Library through Skill Storage,
-6. exposing offline management APIs for import/list operations,
-7. testing everything without Awin credentials or network access.
+1. secure Awin user access-token connection through the public Skill Runtime,
+2. automatic publisher-account discovery,
+3. automatic publisher selection when exactly one account is available,
+4. an explicit publisher-selection state when several accounts are available,
+5. safe connection status that never returns the token,
+6. parsing supported Awin HTML banner snippets,
+7. validating and normalizing creatives,
+8. deduplicated per-guild Creative Library persistence,
+9. offline tests with fake HTTP and secret-store ports.
 
-The authenticated Awin API connection is intentionally deferred until the GamerHQ public Skill SDK exposes host-neutral HTTP and secret-storage ports. The Skill must not bypass the SDK by importing GamerHQ internals.
+Awin access tokens are stored only through `secrets.skill`. They are not copied into ordinary Skill Storage, management responses, audit metadata or repository fixtures.
+
+### Host prerequisite
+
+A GamerHQ host must configure `GAMERHQ_SKILL_SECRET_KEY` to make the `secrets.skill` capability available. Generate and retain a stable Fernet key in private deployment configuration. Do not commit it.
+
+The Skill also requires the host-provided `http.external` capability for Awin API calls.
 
 ## Roadmap
 
 Next slices:
 
-- public SDK HTTP + secret-storage integration
-- Awin account connection and publisher selection
-- advertiser discovery
+- advertiser discovery and synchronization
+- official API-backed CreativeSource where supported
 - official API-backed CreativeSource where supported
 - creative preview / enable-disable UI
 - Discord-native affiliate posts
@@ -68,3 +75,19 @@ python -m pytest
 ## Status
 
 Pre-1.0. Public contracts and storage keys should still be treated deliberately so migrations remain understandable.
+
+
+## Awin account setup
+
+The backend setup flow uses the official Awin Accounts API:
+
+1. provide an Awin user access token through the trusted management surface;
+2. the Skill validates it against Awin;
+3. publisher accounts accessible to that Awin user are discovered automatically;
+4. a single publisher is selected automatically;
+5. if multiple publisher accounts are available, the UI should ask the administrator to choose one;
+6. only after successful validation is the token stored in encrypted Skill secret storage.
+
+Disconnecting removes both the stored token and the local connection profile.
+
+The current repository exposes this through versioned Management APIs. A Discord slash-command facade such as `/awin setup` should call these contracts rather than duplicate connection logic.
