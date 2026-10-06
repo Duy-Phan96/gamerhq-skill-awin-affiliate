@@ -31,13 +31,19 @@ Status: implemented on the initial feature branch.
 - if not, design an isolated authenticated importer rather than spreading scraping logic
 - implement authoritative sync transitions: new, updated, missing, restored
 
-## Slice 4 — Discord Creative Library UX
+## Slice 4 — Creative Library management
 
-- advertiser selector
-- pagination and filters
-- preview
-- enable/disable and multi-select
-- safe confirmation summaries
+Status: implemented as host-neutral management contracts in 0.3.0.
+
+- advertiser filtering
+- bounded pagination
+- active/enabled/type filters
+- Discord-native preview payload
+- single and multi-select enable/disable
+- advertiser-wide enable/disable
+- per-guild mutation locking to avoid lost updates
+
+Host-specific Discord/Web rendering remains a separate adapter concern.
 
 ## Slice 5 — Post now
 
