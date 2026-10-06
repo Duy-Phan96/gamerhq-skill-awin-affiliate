@@ -1,6 +1,8 @@
 from .awin_api import AwinAccount, AwinApiError, AwinClient, AwinProgramme
+from .creative_sources import CreativeSnapshot, CreativeSource, CreativeSourceAuthority
 from .imports import AwinHtmlCreativeSource, CreativeImportError
 from .models import Creative, CreativeState
+from .sync import CreativeSyncResult, apply_creative_snapshot
 from .skill import (
     ADVERTISERS_LIST_API,
     DESCRIBE_API,
@@ -30,8 +32,13 @@ __all__ = [
     "AwinProgramme",
     "AwinHtmlCreativeSource",
     "Creative",
+    "CreativeSnapshot",
+    "CreativeSource",
+    "CreativeSourceAuthority",
+    "CreativeSyncResult",
     "CreativeImportError",
     "CreativeState",
+    "apply_creative_snapshot",
     "DESCRIBE_API",
     "IMPORT_HTML_API",
     "SETUP_ACCOUNTS_API",
