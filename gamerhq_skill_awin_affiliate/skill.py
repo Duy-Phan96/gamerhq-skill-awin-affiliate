@@ -15,24 +15,33 @@ from skill_runtime import (
 
 from .imports import AwinHtmlCreativeSource
 from .models import Creative
+from .setup import AwinSetupService
 
 SKILL_ID = "awin-affiliate"
 STORAGE_KEY = "creatives.v1"
 LIST_CREATIVES_API = "awin-affiliate.creatives.list.v1"
 IMPORT_HTML_API = "awin-affiliate.creatives.import-html.v1"
 DESCRIBE_API = "awin-affiliate.describe.v1"
+SETUP_STATUS_API = "awin-affiliate.setup.status.v1"
+SETUP_CONNECT_API = "awin-affiliate.setup.connect.v1"
+SETUP_ACCOUNTS_API = "awin-affiliate.setup.accounts.v1"
+SETUP_SELECT_PUBLISHER_API = "awin-affiliate.setup.select-publisher.v1"
+SETUP_DISCONNECT_API = "awin-affiliate.setup.disconnect.v1"
+ADVERTISERS_LIST_API = "awin-affiliate.advertisers.list.v1"
 
 
 class AwinAffiliateSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Awin Affiliate",
-        version="0.1.0",
+        version="0.2.0",
         runtime_api_version="1",
         description="Import and manage Awin affiliate creatives without depending on another Skill.",
         author="GamerHQ",
         permissions=(
             SkillCapability.STORAGE_SKILL.value,
+            SkillCapability.SKILL_SECURE_STORAGE.value,
+            SkillCapability.HTTP_EXTERNAL.value,
             SkillCapability.AUDIT_WRITE.value,
         ),
         management_apis=SkillManagementApis(
@@ -40,6 +49,12 @@ class AwinAffiliateSkill:
                 ManagementApiContract(LIST_CREATIVES_API, "List imported Awin creatives."),
                 ManagementApiContract(IMPORT_HTML_API, "Import supported Awin image creative HTML."),
                 ManagementApiContract(DESCRIBE_API, "Describe current Awin Affiliate capabilities and limitations."),
+                ManagementApiContract(SETUP_STATUS_API, "Read masked Awin connection status."),
+                ManagementApiContract(SETUP_CONNECT_API, "Verify and securely store an Awin access token."),
+                ManagementApiContract(SETUP_ACCOUNTS_API, "List publisher accounts available to the connected Awin user."),
+                ManagementApiContract(SETUP_SELECT_PUBLISHER_API, "Select the publisher account used by this guild."),
+                ManagementApiContract(SETUP_DISCONNECT_API, "Disconnect the Awin account and delete the stored token."),
+                ManagementApiContract(ADVERTISERS_LIST_API, "List Awin programmes/advertisers for the selected publisher."),
             )
         ),
     )
@@ -51,6 +66,12 @@ class AwinAffiliateSkill:
         ctx.management.expose(LIST_CREATIVES_API, self._manage_list_creatives)
         ctx.management.expose(IMPORT_HTML_API, self._manage_import_html)
         ctx.management.expose(DESCRIBE_API, self._manage_describe)
+        ctx.management.expose(SETUP_STATUS_API, self._manage_setup_status)
+        ctx.management.expose(SETUP_CONNECT_API, self._manage_setup_connect)
+        ctx.management.expose(SETUP_ACCOUNTS_API, self._manage_setup_accounts)
+        ctx.management.expose(SETUP_SELECT_PUBLISHER_API, self._manage_setup_select_publisher)
+        ctx.management.expose(SETUP_DISCONNECT_API, self._manage_setup_disconnect)
+        ctx.management.expose(ADVERTISERS_LIST_API, self._manage_advertisers_list)
 
     async def enable(self, ctx) -> None:
         await ctx.audit.write(action="enabled")
@@ -66,7 +87,16 @@ class AwinAffiliateSkill:
 
     async def health_check(self, ctx) -> SkillHealth:
         creatives = await self.list_creatives(ctx)
-        return SkillHealth("PASS", f"{len(creatives)} Awin creative(s) in the local library.")
+        status = await AwinSetupService(ctx).status()
+        if not status["connected"]:
+            return SkillHealth("PASS", f"Awin not connected; {len(creatives)} local creative(s).")
+        if not status["publisherSelected"]:
+            return SkillHealth("PASS", f"Awin connected; publisher selection required; {len(creatives)} local creative(s).")
+        publisher = status["publisher"] or {}
+        return SkillHealth(
+            "PASS",
+            f"Awin connected to {publisher.get('name') or publisher.get('id')}; {len(creatives)} local creative(s).",
+        )
 
     async def list_creatives(self, ctx) -> list[Creative]:
         raw = await ctx.storage.get(STORAGE_KEY)
@@ -138,6 +168,39 @@ class AwinAffiliateSkill:
         )
         return {"import": result}
 
+    async def _manage_setup_status(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        return {"setup": await AwinSetupService(ctx).status()}
+
+    async def _manage_setup_connect(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        token = str(payload.get("accessToken", "")).strip()
+        if not token:
+            raise ValueError("accessToken is required.")
+        return {"setup": await AwinSetupService(ctx).connect(token=token)}
+
+    async def _manage_setup_accounts(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        accounts = await AwinSetupService(ctx).publisher_accounts()
+        return {"accounts": [account.to_dict() for account in accounts]}
+
+    async def _manage_setup_select_publisher(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        publisher_id = str(payload.get("publisherId", "")).strip()
+        if not publisher_id:
+            raise ValueError("publisherId is required.")
+        return await AwinSetupService(ctx).select_publisher(publisher_id=publisher_id)
+
+    async def _manage_setup_disconnect(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        await AwinSetupService(ctx).disconnect()
+        return {"disconnected": True}
+
+    async def _manage_advertisers_list(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        relationship = payload.get("relationship")
+        if relationship is not None:
+            relationship = str(relationship).strip().lower() or None
+        allowed = {None, "joined", "pending", "suspended", "rejected", "notjoined"}
+        if relationship not in allowed:
+            raise ValueError("Unsupported Awin relationship filter.")
+        programmes = await AwinSetupService(ctx).programmes(relationship=relationship)
+        return {"advertisers": [programme.to_dict() for programme in programmes]}
+
     async def _manage_describe(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         return {
             "skillId": SKILL_ID,
@@ -150,10 +213,19 @@ class AwinAffiliateSkill:
                     "networkRequired": False,
                     "credentialsRequired": False,
                     "supportsMissingDetection": False,
-                }
+                },
+                {
+                    "id": "awin_api",
+                    "label": "Awin Publisher API",
+                    "networkRequired": True,
+                    "credentialsRequired": True,
+                    "supportsAccountDiscovery": True,
+                    "supportsAdvertiserDiscovery": True,
+                    "supportsMissingDetection": False,
+                },
             ],
             "limitations": [
-                "Authenticated Awin API sync is not enabled in this slice.",
+                "A complete official image-creative library endpoint has not been established yet.",
                 "Manual imports do not mark omitted creatives as missing because a pasted snippet may be incomplete.",
             ],
         }

@@ -67,3 +67,5 @@ def test_manifest_is_standalone_and_does_not_consume_other_skills():
     assert skill.manifest.id == "awin-affiliate"
     assert skill.manifest.public_apis.consumes == ()
     assert "storage.skill" in skill.manifest.permissions
+    assert "secrets.skill" in skill.manifest.permissions
+    assert "http.external" in skill.manifest.permissions
