@@ -16,16 +16,22 @@ Status: implemented on the initial feature branch.
 
 ## Slice 2 — Public SDK prerequisites + Awin connection
 
-- add or consume host-neutral external HTTP port
-- add or consume dedicated secret-storage port
+Status: implemented in the account-setup feature branch; depends on the reviewed Runtime HTTP/secrets contracts.
+
+- consume host-neutral external HTTP port
+- consume dedicated secret-storage port
 - connect with Awin access token without exposing it
 - retrieve accessible publisher accounts
-- select/verify publisher account
+- auto-select one publisher or request a choice when several exist
+- revalidate publisher access before selection
 - connection test and masked status
+- explicit disconnect that removes stored credentials
 
 ## Slice 3 — Advertisers and authoritative sync
 
-- retrieve publisher programmes/advertisers through supported Awin APIs
+Next.
+
+- retrieve publisher programmes/advertisers through the supported Awin Programmes API
 - add `CreativeSource` protocol
 - determine whether the complete publisher Creative Library is available via an official API
 - if not, design an isolated authenticated importer rather than spreading scraping logic
