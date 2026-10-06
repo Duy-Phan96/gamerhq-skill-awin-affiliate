@@ -46,7 +46,7 @@ class AwinAffiliateSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Awin Affiliate",
-        version="0.2.0",
+        version="0.3.0",
         runtime_api_version="1",
         description="Import and manage Awin affiliate creatives without depending on another Skill.",
         author="GamerHQ",
