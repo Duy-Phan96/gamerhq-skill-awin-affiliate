@@ -37,13 +37,17 @@ Status: domain sync engine implemented; live authoritative Creative source still
 - missing detection is limited to records owned by the authoritative source
 - future authenticated Creative importer remains isolated behind the source boundary
 
-## Slice 4 — Discord Creative Library UX
+## Slice 4 — Creative Library management
 
-- advertiser selector
-- pagination and filters
-- preview
-- enable/disable and multi-select
-- safe confirmation summaries
+Status: host-neutral management contracts implemented in 0.4.0.
+
+- advertiser/type/active/enabled filters
+- bounded pagination
+- Discord-native preview payload
+- single and multi-select enable/disable
+- advertiser-wide enable/disable
+- shared per-guild mutation lock with Creative sync
+- host-specific Discord/Web rendering remains separate
 
 ## Slice 5 — Post now
 
