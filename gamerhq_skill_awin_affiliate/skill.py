@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from dataclasses import replace
 from collections.abc import Mapping
 from typing import Any
 
@@ -96,12 +97,10 @@ class AwinAffiliateSkill:
                 current[candidate.id] = candidate.with_seen_at(timestamp)
                 added += 1
             else:
-                merged = Creative(
-                    **{
-                        **candidate.__dict__,
-                        "user_enabled": existing.user_enabled,
-                        "first_seen_at": existing.first_seen_at,
-                    }
+                merged = replace(
+                    candidate,
+                    user_enabled=existing.user_enabled,
+                    first_seen_at=existing.first_seen_at,
                 ).with_seen_at(timestamp)
                 current[candidate.id] = merged
                 updated += 1
