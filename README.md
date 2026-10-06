@@ -2,7 +2,7 @@
 
 Standalone Awin Affiliate Skill for GamerHQ-compatible hosts.
 
-> Early development: the first vertical slice focuses on importing Awin banner HTML into a normalized Creative Library without requiring real credentials.
+> Early development: the Skill now includes secure Awin account connection, automatic publisher discovery, advertiser discovery and the original offline Creative Library import slice.
 
 ## Goals
 
@@ -20,27 +20,26 @@ This repository is an independent GamerHQ Skill package. It may use public Skill
 
 Shared runtime primitives such as storage and scheduling may be used internally without introducing a dependency on another Skill.
 
-## Current vertical slice
+## Current implementation
 
-The initial implementation covers:
+The current implementation covers:
 
-1. parsing supported Awin HTML banner snippets,
-2. validating Awin tracking/image URLs,
-3. normalizing them into Creative records,
-4. deduplicating imports,
-5. persisting a per-guild Creative Library through Skill Storage,
-6. exposing offline management APIs for import/list operations,
-7. testing everything without Awin credentials or network access.
+1. secure Awin token verification through the public Runtime HTTP port,
+2. encrypted token persistence through the public Skill secret-store port,
+3. automatic publisher account discovery,
+4. automatic selection when only one publisher account exists,
+5. explicit publisher selection when multiple accounts exist,
+6. Awin programme / advertiser discovery,
+7. parsing supported Awin HTML banner snippets,
+8. normalizing and persisting a Creative Library,
+9. offline tests with fake HTTP and secret ports — no real Awin credentials required.
 
-The authenticated Awin API connection is intentionally deferred until the GamerHQ public Skill SDK exposes host-neutral HTTP and secret-storage ports. The Skill must not bypass the SDK by importing GamerHQ internals.
+The Skill never imports GamerHQ host internals and remains usable without Recurring Posts.
 
 ## Roadmap
 
 Next slices:
 
-- public SDK HTTP + secret-storage integration
-- Awin account connection and publisher selection
-- advertiser discovery
 - official API-backed CreativeSource where supported
 - creative preview / enable-disable UI
 - Discord-native affiliate posts
@@ -54,6 +53,22 @@ Affiliate posts will default to a visible disclosure such as:
 `Werbung · Affiliate-Link`
 
 Supporting copy such as `Mit Nutzung des Links unterstützt ihr den Server.` is additional context and does not replace the disclosure.
+
+## Setup flow
+
+The intended administrator flow is:
+
+```text
+Connect Awin token
+→ validate against Awin
+→ discover publisher accounts
+→ auto-select one account or ask the admin to choose
+→ browse advertisers/programmes
+```
+
+The access token is never returned after setup; status only exposes a masked marker.
+
+See `docs/awin-api.md` for API details and limitations.
 
 ## Development
 
