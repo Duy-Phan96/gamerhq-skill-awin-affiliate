@@ -52,7 +52,8 @@ def test_import_persists_and_reimport_updates_without_duplication():
         assert first["added"] == 1
         assert first["updated"] == 0
         assert second["added"] == 0
-        assert second["updated"] == 1
+        assert second["updated"] == 0
+        assert second["unchanged"] == 1
         assert len(creatives) == 1
         assert creatives[0].first_seen_at == 100
         assert creatives[0].last_seen_at == 200

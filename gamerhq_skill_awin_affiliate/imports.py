@@ -4,6 +4,7 @@ from html.parser import HTMLParser
 import re
 from urllib.parse import parse_qs, urlparse
 
+from .creative_sources import CreativeSnapshot, CreativeSourceAuthority
 from .models import Creative, CreativeState
 
 
@@ -72,6 +73,7 @@ def _single(query: dict[str, list[str]], key: str, *, required: bool = True) -> 
 
 class AwinHtmlCreativeSource:
     source_id = "manual_html"
+    authority = CreativeSourceAuthority.UPSERT_ONLY
 
     def parse(self, html: str, *, advertiser_name: str | None = None) -> list[Creative]:
         if not isinstance(html, str) or not html.strip():
@@ -119,3 +121,19 @@ class AwinHtmlCreativeSource:
             )
 
         return creatives
+
+    def snapshot(self, html: str, *, advertiser_name: str | None = None) -> CreativeSnapshot:
+        creatives = self.parse(html, advertiser_name=advertiser_name)
+        publisher_ids = {creative.publisher_id for creative in creatives}
+        advertiser_ids = {creative.advertiser_id for creative in creatives}
+        if len(publisher_ids) != 1 or len(advertiser_ids) != 1:
+            raise CreativeImportError(
+                "One manual HTML import must contain creatives from exactly one publisher and advertiser."
+            )
+        return CreativeSnapshot(
+            source_id=self.source_id,
+            authority=self.authority,
+            publisher_id=next(iter(publisher_ids)),
+            advertiser_id=next(iter(advertiser_ids)),
+            creatives=tuple(creatives),
+        )

@@ -16,20 +16,26 @@ Status: implemented on the initial feature branch.
 
 ## Slice 2 — Public SDK prerequisites + Awin connection
 
-- add or consume host-neutral external HTTP port
-- add or consume dedicated secret-storage port
-- connect with Awin access token without exposing it
-- retrieve accessible publisher accounts
-- select/verify publisher account
-- connection test and masked status
+Status: implemented.
+
+- host-neutral external HTTP port
+- dedicated encrypted secret-storage port
+- Awin access-token verification without exposing it
+- publisher account discovery and selection
+- masked connection status
+- programme / advertiser discovery
 
 ## Slice 3 — Advertisers and authoritative sync
 
-- retrieve publisher programmes/advertisers through supported Awin APIs
-- add `CreativeSource` protocol
-- determine whether the complete publisher Creative Library is available via an official API
-- if not, design an isolated authenticated importer rather than spreading scraping logic
-- implement authoritative sync transitions: new, updated, missing, restored
+Status: domain sync engine implemented; live authoritative Creative source still pending.
+
+- publisher programme / advertiser discovery through supported Awin APIs
+- `CreativeSource` protocol and explicit source authority
+- official documentation review found no publisher API endpoint for the complete My Creative banner library
+- manual HTML source is explicitly `UPSERT_ONLY`
+- authoritative snapshots support new, updated, missing and restored transitions
+- missing detection is limited to records owned by the authoritative source
+- future authenticated Creative importer remains isolated behind the source boundary
 
 ## Slice 4 — Discord Creative Library UX
 

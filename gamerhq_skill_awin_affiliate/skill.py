@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import time
-from dataclasses import replace
 from collections.abc import Mapping
 from typing import Any
 
@@ -16,6 +15,8 @@ from skill_runtime import (
 from .imports import AwinHtmlCreativeSource
 from .models import Creative
 from .setup import AwinSetupService
+from .creative_sources import CreativeSnapshot
+from .sync import CreativeSyncResult, apply_creative_snapshot
 
 SKILL_ID = "awin-affiliate"
 STORAGE_KEY = "creatives.v1"
@@ -34,7 +35,7 @@ class AwinAffiliateSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Awin Affiliate",
-        version="0.2.0",
+        version="0.3.0",
         runtime_api_version="1",
         description="Import and manage Awin affiliate creatives without depending on another Skill.",
         author="GamerHQ",
@@ -106,6 +107,36 @@ class AwinAffiliateSkill:
             raise ValueError("Stored Awin Creative Library is invalid.")
         return [Creative.from_dict(item) for item in raw]
 
+    async def sync_snapshot(
+        self,
+        ctx,
+        *,
+        snapshot: CreativeSnapshot,
+        now: int | None = None,
+    ) -> CreativeSyncResult:
+        timestamp = int(time.time()) if now is None else int(now)
+        ordered, result = apply_creative_snapshot(
+            await self.list_creatives(ctx),
+            snapshot,
+            now=timestamp,
+        )
+        await ctx.storage.set(STORAGE_KEY, [creative.to_dict() for creative in ordered])
+        await ctx.audit.write(
+            action="creatives.synced",
+            target=snapshot.advertiser_id,
+            metadata={
+                "source": snapshot.source_id,
+                "authority": snapshot.authority.value,
+                "found": result.found,
+                "new": result.new,
+                "updated": result.updated,
+                "missing": result.missing,
+                "restored": result.restored,
+                "unchanged": result.unchanged,
+            },
+        )
+        return result
+
     async def import_html(
         self,
         ctx,
@@ -114,42 +145,22 @@ class AwinAffiliateSkill:
         advertiser_name: str | None = None,
         now: int | None = None,
     ) -> dict[str, Any]:
-        timestamp = int(time.time()) if now is None else int(now)
-        incoming = self._manual_source.parse(html, advertiser_name=advertiser_name)
-        current = {creative.id: creative for creative in await self.list_creatives(ctx)}
-
-        added = 0
-        updated = 0
-        imported_ids: list[str] = []
-        for candidate in incoming:
-            existing = current.get(candidate.id)
-            if existing is None:
-                current[candidate.id] = candidate.with_seen_at(timestamp)
-                added += 1
-            else:
-                merged = replace(
-                    candidate,
-                    user_enabled=existing.user_enabled,
-                    first_seen_at=existing.first_seen_at,
-                ).with_seen_at(timestamp)
-                current[candidate.id] = merged
-                updated += 1
-            imported_ids.append(candidate.id)
-
-        ordered = sorted(current.values(), key=lambda creative: creative.id)
-        await ctx.storage.set(STORAGE_KEY, [creative.to_dict() for creative in ordered])
+        snapshot = self._manual_source.snapshot(html, advertiser_name=advertiser_name)
+        sync = await self.sync_snapshot(ctx, snapshot=snapshot, now=now)
         await ctx.audit.write(
             action="creatives.imported",
-            target=advertiser_name,
-            metadata={"source": "manual_html", "added": added, "updated": updated},
+            target=advertiser_name or snapshot.advertiser_id,
+            metadata={
+                "source": snapshot.source_id,
+                "new": sync.new,
+                "updated": sync.updated,
+                "unchanged": sync.unchanged,
+            },
         )
         return {
-            "source": "manual_html",
-            "found": len(incoming),
-            "added": added,
-            "updated": updated,
-            "total": len(ordered),
-            "creativeIds": imported_ids,
+            **sync.to_dict(),
+            "added": sync.new,
+            "creativeIds": [creative.id for creative in snapshot.creatives],
         }
 
     async def _manage_list_creatives(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
