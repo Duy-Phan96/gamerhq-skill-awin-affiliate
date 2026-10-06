@@ -22,6 +22,13 @@ from .creative_library import (
 )
 from .imports import AwinHtmlCreativeSource
 from .models import Creative
+from .posting import (
+    POST_STATE_KEY,
+    read_last_creative_id,
+    render_post,
+    select_creative,
+    with_last_creative,
+)
 from .setup import AwinSetupService
 from .creative_sources import CreativeSnapshot
 from .sync import CreativeSyncResult, apply_creative_snapshot
@@ -41,13 +48,15 @@ SETUP_ACCOUNTS_API = "awin-affiliate.setup.accounts.v1"
 SETUP_SELECT_PUBLISHER_API = "awin-affiliate.setup.select-publisher.v1"
 SETUP_DISCONNECT_API = "awin-affiliate.setup.disconnect.v1"
 ADVERTISERS_LIST_API = "awin-affiliate.advertisers.list.v1"
+POST_PREVIEW_API = "awin-affiliate.post.preview.v1"
+POST_SEND_API = "awin-affiliate.post.send.v1"
 
 
 class AwinAffiliateSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Awin Affiliate",
-        version="0.4.0",
+        version="0.5.0",
         runtime_api_version="1",
         description="Import and manage Awin affiliate creatives without depending on another Skill.",
         author="GamerHQ",
@@ -55,6 +64,9 @@ class AwinAffiliateSkill:
             SkillCapability.STORAGE_SKILL.value,
             SkillCapability.SKILL_SECURE_STORAGE.value,
             SkillCapability.HTTP_EXTERNAL.value,
+            SkillCapability.DISCORD_CHANNELS_READ.value,
+            SkillCapability.DISCORD_MESSAGES_SEND.value,
+            SkillCapability.DISCORD_EMBEDS_SEND.value,
             SkillCapability.AUDIT_WRITE.value,
         ),
         management_apis=SkillManagementApis(
@@ -72,6 +84,8 @@ class AwinAffiliateSkill:
                 ManagementApiContract(SETUP_SELECT_PUBLISHER_API, "Select the publisher account used by this guild."),
                 ManagementApiContract(SETUP_DISCONNECT_API, "Disconnect the Awin account and delete the stored token."),
                 ManagementApiContract(ADVERTISERS_LIST_API, "List Awin programmes/advertisers for the selected publisher."),
+                ManagementApiContract(POST_PREVIEW_API, "Preview an Awin affiliate post without sending it."),
+                ManagementApiContract(POST_SEND_API, "Send a previously reviewed Awin affiliate creative to Discord."),
             )
         ),
     )
@@ -97,6 +111,8 @@ class AwinAffiliateSkill:
         ctx.management.expose(SETUP_SELECT_PUBLISHER_API, self._manage_setup_select_publisher)
         ctx.management.expose(SETUP_DISCONNECT_API, self._manage_setup_disconnect)
         ctx.management.expose(ADVERTISERS_LIST_API, self._manage_advertisers_list)
+        ctx.management.expose(POST_PREVIEW_API, self._manage_post_preview)
+        ctx.management.expose(POST_SEND_API, self._manage_post_send)
 
     async def enable(self, ctx) -> None:
         await ctx.audit.write(action="enabled")
@@ -339,6 +355,115 @@ class AwinAffiliateSkill:
             raise ValueError("Unsupported Awin relationship filter.")
         programmes = await AwinSetupService(ctx).programmes(relationship=relationship)
         return {"advertisers": [programme.to_dict() for programme in programmes]}
+
+    async def _post_selection(self, ctx, payload: Mapping[str, Any]):
+        mode = str(payload.get("selectionMode", "specific")).strip().lower()
+        creative_id = str(payload.get("creativeId", "")).strip() or None
+        advertiser_id = str(payload.get("advertiserId", "")).strip() or None
+        state = await ctx.storage.get(POST_STATE_KEY)
+        last_creative_id = (
+            read_last_creative_id(state, advertiser_id=advertiser_id)
+            if advertiser_id
+            else None
+        )
+        return select_creative(
+            await self.list_creatives(ctx),
+            mode=mode,
+            creative_id=creative_id,
+            advertiser_id=advertiser_id,
+            last_creative_id=last_creative_id,
+        )
+
+    async def _validated_post_channel(self, ctx, channel_id: int) -> int:
+        if channel_id <= 0:
+            raise ValueError("channelId must be positive.")
+        channel = await ctx.discord.get_channel(channel_id=channel_id)
+        if channel.kind not in {"text", "thread"}:
+            raise ValueError("Awin posts require a text channel or thread.")
+        return channel.id
+
+    async def _manage_post_preview(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        try:
+            channel_id = int(payload["channelId"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("channelId is required.") from exc
+        channel_id = await self._validated_post_channel(ctx, channel_id)
+        selection = await self._post_selection(ctx, payload)
+        rendered = render_post(
+            selection.creative,
+            title=str(payload.get("title", "")).strip() or None,
+            text=str(payload.get("text", "")).strip() or None,
+        )
+        return {
+            "preview": {
+                "channelId": channel_id,
+                "selection": selection.to_dict(),
+                **rendered,
+            },
+            "confirmPayload": {
+                "channelId": channel_id,
+                "creativeId": selection.creative.id,
+                "selectionMode": selection.mode,
+                "title": str(payload.get("title", "")).strip() or None,
+                "text": str(payload.get("text", "")).strip() or None,
+            },
+        }
+
+    async def _manage_post_send(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        try:
+            channel_id = int(payload["channelId"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("channelId is required.") from exc
+        channel_id = await self._validated_post_channel(ctx, channel_id)
+        creative_id = str(payload.get("creativeId", "")).strip()
+        if not creative_id:
+            raise ValueError("creativeId is required after preview.")
+
+        selection = select_creative(
+            await self.list_creatives(ctx),
+            mode="specific",
+            creative_id=creative_id,
+        )
+        rendered = render_post(
+            selection.creative,
+            title=str(payload.get("title", "")).strip() or None,
+            text=str(payload.get("text", "")).strip() or None,
+        )
+        message_id = await ctx.discord.send_message(
+            channel_id=channel_id,
+            content=rendered["content"],
+            embed=rendered["embed"],
+            allowed_mentions={},
+            link_buttons=rendered["linkButtons"],
+        )
+
+        async with self._creative_lock(ctx.guild_id):
+            state = await ctx.storage.get(POST_STATE_KEY)
+            await ctx.storage.set(
+                POST_STATE_KEY,
+                with_last_creative(
+                    state,
+                    advertiser_id=selection.creative.advertiser_id,
+                    creative_id=selection.creative.id,
+                ),
+            )
+
+        await ctx.audit.write(
+            action="awin.post-sent",
+            target=selection.creative.advertiser_id,
+            metadata={
+                "creativeId": selection.creative.id,
+                "channelId": channel_id,
+                "messageId": message_id,
+            },
+        )
+        return {
+            "sent": True,
+            "messageId": message_id,
+            "channelId": channel_id,
+            "creativeId": selection.creative.id,
+            "advertiserId": selection.creative.advertiser_id,
+        }
 
     async def _manage_describe(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         return {
