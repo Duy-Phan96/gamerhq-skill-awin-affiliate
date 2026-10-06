@@ -27,11 +27,18 @@ A manual paste can be incomplete. Therefore an HTML import may add or refresh re
 
 Missing-state transitions belong to authoritative full synchronization sources only.
 
-## SDK gap for authenticated Awin access
+## Authenticated Awin access
 
-The current public GamerHQ Skill Runtime exposes a capability identifier for external HTTP access, but the SkillContext does not yet expose a host-neutral HTTP client port. It also does not expose a dedicated secret-storage port.
+Authenticated Awin calls use only public Skill Runtime ports:
 
-Until those contracts exist, this repository will not bypass the Skill boundary through GamerHQ internals. Token-backed API sync should be added after the public SDK can provide safe HTTP and secret handling.
+- `ctx.http` through the `http.external` capability;
+- `ctx.secrets` through the `secrets.skill` capability.
+
+The access token is never persisted in `creatives.v1` or `connection.v1`. Normal Skill Storage contains only non-secret connection metadata.
+
+The first official adapter uses Awin's Accounts endpoint to discover publisher accounts. Advertiser/programme discovery is the next provider slice.
+
+The full publisher banner/creative-library source remains behind the CreativeSource boundary. If the official APIs do not expose the complete library, an authenticated importer can be added as a separate adapter without leaking scraping concerns into domain code.
 
 ## Storage
 
