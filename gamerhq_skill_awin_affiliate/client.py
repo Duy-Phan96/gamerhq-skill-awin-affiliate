@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from skill_runtime import TransientHostError
+
 
 AWIN_API_BASE = "https://api.awin.com"
 
@@ -34,12 +36,15 @@ class AwinApiClient:
         if not token:
             raise AwinApiError("Awin access token is required.")
 
-        response = await self._http.request(
-            method="GET",
-            url=f"{AWIN_API_BASE}/accounts",
-            headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
-            query={"type": "publisher"},
-        )
+        try:
+            response = await self._http.request(
+                method="GET",
+                url=f"{AWIN_API_BASE}/accounts",
+                headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+                query={"type": "publisher"},
+            )
+        except TransientHostError as exc:
+            raise AwinApiError("Could not reach the Awin API. Try again shortly.") from exc
         if response.status in {401, 403}:
             raise AwinApiError(
                 "Awin rejected the access token or the account permissions. "
