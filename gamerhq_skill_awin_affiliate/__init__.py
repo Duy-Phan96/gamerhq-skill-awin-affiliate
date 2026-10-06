@@ -1,8 +1,15 @@
+from .awin_api import AwinAccount, AwinApiError, AwinClient, AwinProgramme
 from .imports import AwinHtmlCreativeSource, CreativeImportError
 from .models import Creative, CreativeState
 from .skill import (
+    ADVERTISERS_LIST_API,
     DESCRIBE_API,
     IMPORT_HTML_API,
+    SETUP_ACCOUNTS_API,
+    SETUP_CONNECT_API,
+    SETUP_DISCONNECT_API,
+    SETUP_SELECT_PUBLISHER_API,
+    SETUP_STATUS_API,
     LIST_CREATIVES_API,
     SKILL_ID,
     STORAGE_KEY,
@@ -15,13 +22,23 @@ def create_skill():
 
 
 __all__ = [
+    "ADVERTISERS_LIST_API",
+    "AwinAccount",
     "AwinAffiliateSkill",
+    "AwinApiError",
+    "AwinClient",
+    "AwinProgramme",
     "AwinHtmlCreativeSource",
     "Creative",
     "CreativeImportError",
     "CreativeState",
     "DESCRIBE_API",
     "IMPORT_HTML_API",
+    "SETUP_ACCOUNTS_API",
+    "SETUP_CONNECT_API",
+    "SETUP_DISCONNECT_API",
+    "SETUP_SELECT_PUBLISHER_API",
+    "SETUP_STATUS_API",
     "LIST_CREATIVES_API",
     "SKILL_ID",
     "STORAGE_KEY",
