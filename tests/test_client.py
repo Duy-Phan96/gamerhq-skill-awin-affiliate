@@ -4,6 +4,7 @@ import json
 import pytest
 
 from gamerhq_skill_awin_affiliate.client import AwinApiClient, AwinApiError
+from skill_runtime import TransientHostError
 
 
 class Response:
@@ -66,5 +67,17 @@ def test_accounts_reject_malformed_response():
             await AwinApiClient(Http(Response(200, {"wrong": []}))).publisher_accounts(
                 access_token="token"
             )
+
+    asyncio.run(run())
+
+
+def test_accounts_normalize_transient_transport_failure():
+    class FailingHttp:
+        async def request(self, **kwargs):
+            raise TransientHostError("private transport detail")
+
+    async def run():
+        with pytest.raises(AwinApiError, match="Could not reach"):
+            await AwinApiClient(FailingHttp()).publisher_accounts(access_token="token")
 
     asyncio.run(run())
