@@ -36,6 +36,7 @@ class Audit:
 
 class Context:
     def __init__(self):
+        self.guild_id = 123
         self.storage = Storage()
         self.audit = Audit()
 
