@@ -360,6 +360,8 @@ class AwinAffiliateSkill:
         mode = str(payload.get("selectionMode", "specific")).strip().lower()
         creative_id = str(payload.get("creativeId", "")).strip() or None
         advertiser_id = str(payload.get("advertiserId", "")).strip() or None
+        if mode in {"random", "next"} and advertiser_id is None:
+            raise ValueError("advertiserId is required for random or next selection.")
         state = await ctx.storage.get(POST_STATE_KEY)
         last_creative_id = (
             read_last_creative_id(state, advertiser_id=advertiser_id)
@@ -433,7 +435,7 @@ class AwinAffiliateSkill:
             channel_id=channel_id,
             content=rendered["content"],
             embed=rendered["embed"],
-            allowed_mentions={},
+            allowed_mentions=None,
             link_buttons=rendered["linkButtons"],
         )
 
