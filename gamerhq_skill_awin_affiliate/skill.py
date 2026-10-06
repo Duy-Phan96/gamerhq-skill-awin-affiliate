@@ -15,7 +15,8 @@ from skill_runtime import (
 from .imports import AwinHtmlCreativeSource
 from .models import Creative
 from .setup import AwinSetupService
-from .sync import apply_creative_snapshot
+from .creative_sources import CreativeSnapshot
+from .sync import CreativeSyncResult, apply_creative_snapshot
 
 SKILL_ID = "awin-affiliate"
 STORAGE_KEY = "creatives.v1"
@@ -106,6 +107,36 @@ class AwinAffiliateSkill:
             raise ValueError("Stored Awin Creative Library is invalid.")
         return [Creative.from_dict(item) for item in raw]
 
+    async def sync_snapshot(
+        self,
+        ctx,
+        *,
+        snapshot: CreativeSnapshot,
+        now: int | None = None,
+    ) -> CreativeSyncResult:
+        timestamp = int(time.time()) if now is None else int(now)
+        ordered, result = apply_creative_snapshot(
+            await self.list_creatives(ctx),
+            snapshot,
+            now=timestamp,
+        )
+        await ctx.storage.set(STORAGE_KEY, [creative.to_dict() for creative in ordered])
+        await ctx.audit.write(
+            action="creatives.synced",
+            target=snapshot.advertiser_id,
+            metadata={
+                "source": snapshot.source_id,
+                "authority": snapshot.authority.value,
+                "found": result.found,
+                "new": result.new,
+                "updated": result.updated,
+                "missing": result.missing,
+                "restored": result.restored,
+                "unchanged": result.unchanged,
+            },
+        )
+        return result
+
     async def import_html(
         self,
         ctx,
@@ -114,14 +145,8 @@ class AwinAffiliateSkill:
         advertiser_name: str | None = None,
         now: int | None = None,
     ) -> dict[str, Any]:
-        timestamp = int(time.time()) if now is None else int(now)
         snapshot = self._manual_source.snapshot(html, advertiser_name=advertiser_name)
-        ordered, sync = apply_creative_snapshot(
-            await self.list_creatives(ctx),
-            snapshot,
-            now=timestamp,
-        )
-        await ctx.storage.set(STORAGE_KEY, [creative.to_dict() for creative in ordered])
+        sync = await self.sync_snapshot(ctx, snapshot=snapshot, now=now)
         await ctx.audit.write(
             action="creatives.imported",
             target=advertiser_name or snapshot.advertiser_id,
