@@ -13,13 +13,22 @@ from skill_runtime import (
     SkillManifest,
 )
 
+from .client import AwinApiClient, PublisherAccount
+from .connection import AwinConnection, ConnectionStatus
 from .imports import AwinHtmlCreativeSource
 from .models import Creative
 
 SKILL_ID = "awin-affiliate"
 STORAGE_KEY = "creatives.v1"
+CONNECTION_STORAGE_KEY = "connection.v1"
+ACCESS_TOKEN_SECRET_KEY = "access-token.v1"
+
 LIST_CREATIVES_API = "awin-affiliate.creatives.list.v1"
 IMPORT_HTML_API = "awin-affiliate.creatives.import-html.v1"
+SETUP_STATUS_API = "awin-affiliate.setup.status.v1"
+SETUP_CONNECT_API = "awin-affiliate.setup.connect.v1"
+SETUP_SELECT_PUBLISHER_API = "awin-affiliate.setup.select-publisher.v1"
+SETUP_DISCONNECT_API = "awin-affiliate.setup.disconnect.v1"
 DESCRIBE_API = "awin-affiliate.describe.v1"
 
 
@@ -27,18 +36,24 @@ class AwinAffiliateSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Awin Affiliate",
-        version="0.1.0",
+        version="0.2.0",
         runtime_api_version="1",
-        description="Import and manage Awin affiliate creatives without depending on another Skill.",
+        description="Connect Awin, import creatives and manage affiliate content without depending on another Skill.",
         author="GamerHQ",
         permissions=(
             SkillCapability.STORAGE_SKILL.value,
+            SkillCapability.SKILL_SECURE_STORAGE.value,
+            SkillCapability.HTTP_EXTERNAL.value,
             SkillCapability.AUDIT_WRITE.value,
         ),
         management_apis=SkillManagementApis(
             exposes=(
                 ManagementApiContract(LIST_CREATIVES_API, "List imported Awin creatives."),
                 ManagementApiContract(IMPORT_HTML_API, "Import supported Awin image creative HTML."),
+                ManagementApiContract(SETUP_STATUS_API, "Read safe Awin connection status."),
+                ManagementApiContract(SETUP_CONNECT_API, "Validate and connect an Awin user access token."),
+                ManagementApiContract(SETUP_SELECT_PUBLISHER_API, "Select one accessible Awin publisher account."),
+                ManagementApiContract(SETUP_DISCONNECT_API, "Remove the stored Awin connection."),
                 ManagementApiContract(DESCRIBE_API, "Describe current Awin Affiliate capabilities and limitations."),
             )
         ),
@@ -50,6 +65,10 @@ class AwinAffiliateSkill:
     async def register(self, ctx) -> None:
         ctx.management.expose(LIST_CREATIVES_API, self._manage_list_creatives)
         ctx.management.expose(IMPORT_HTML_API, self._manage_import_html)
+        ctx.management.expose(SETUP_STATUS_API, self._manage_setup_status)
+        ctx.management.expose(SETUP_CONNECT_API, self._manage_setup_connect)
+        ctx.management.expose(SETUP_SELECT_PUBLISHER_API, self._manage_setup_select_publisher)
+        ctx.management.expose(SETUP_DISCONNECT_API, self._manage_setup_disconnect)
         ctx.management.expose(DESCRIBE_API, self._manage_describe)
 
     async def enable(self, ctx) -> None:
@@ -66,7 +85,134 @@ class AwinAffiliateSkill:
 
     async def health_check(self, ctx) -> SkillHealth:
         creatives = await self.list_creatives(ctx)
-        return SkillHealth("PASS", f"{len(creatives)} Awin creative(s) in the local library.")
+        connection = await self.connection(ctx)
+        if connection.status == ConnectionStatus.CONNECTED:
+            detail = f"Connected to publisher {connection.publisher_id}; {len(creatives)} creative(s) in the local library."
+        elif connection.status == ConnectionStatus.PUBLISHER_SELECTION_REQUIRED:
+            detail = f"Awin token verified; publisher selection required; {len(creatives)} creative(s) imported."
+        else:
+            detail = f"Awin account not connected; {len(creatives)} creative(s) in the local library."
+        return SkillHealth("PASS", detail)
+
+    async def connection(self, ctx) -> AwinConnection:
+        raw = await ctx.storage.get(CONNECTION_STORAGE_KEY)
+        if raw is None:
+            return AwinConnection(ConnectionStatus.NOT_CONNECTED)
+        if not isinstance(raw, Mapping):
+            raise ValueError("Stored Awin connection configuration is invalid.")
+        return AwinConnection.from_dict(raw)
+
+    async def _save_connection(self, ctx, connection: AwinConnection) -> None:
+        await ctx.storage.set(CONNECTION_STORAGE_KEY, connection.to_dict())
+
+    @staticmethod
+    def _select_account(accounts: list[PublisherAccount], publisher_id: str) -> PublisherAccount:
+        requested = str(publisher_id).strip()
+        for account in accounts:
+            if account.id == requested:
+                return account
+        raise ValueError("Selected Awin publisher account is not available to this token.")
+
+    async def connect(
+        self,
+        ctx,
+        *,
+        access_token: str,
+        publisher_id: str | None = None,
+        now: int | None = None,
+    ) -> AwinConnection:
+        token = str(access_token).strip()
+        if not token:
+            raise ValueError("Awin access token is required.")
+
+        accounts = await AwinApiClient(ctx.http).publisher_accounts(access_token=token)
+        if not accounts:
+            raise ValueError("No Awin publisher accounts are available to this user.")
+
+        timestamp = int(time.time()) if now is None else int(now)
+        requested = str(publisher_id).strip() if publisher_id is not None else ""
+        if requested:
+            selected = self._select_account(accounts, requested)
+            connection = AwinConnection(
+                status=ConnectionStatus.CONNECTED,
+                publisher_id=selected.id,
+                publisher_name=selected.name,
+                user_role=selected.user_role,
+                last_verified_at=timestamp,
+            )
+        elif len(accounts) == 1:
+            selected = accounts[0]
+            connection = AwinConnection(
+                status=ConnectionStatus.CONNECTED,
+                publisher_id=selected.id,
+                publisher_name=selected.name,
+                user_role=selected.user_role,
+                last_verified_at=timestamp,
+            )
+        else:
+            connection = AwinConnection(
+                status=ConnectionStatus.PUBLISHER_SELECTION_REQUIRED,
+                available_publishers=tuple(account.to_dict() for account in accounts),
+                last_verified_at=timestamp,
+            )
+
+        # Persist the token only after Awin has accepted it and the response has
+        # been normalized successfully. It is never copied into Skill Storage.
+        await ctx.secrets.set(ACCESS_TOKEN_SECRET_KEY, token)
+        await self._save_connection(ctx, connection)
+        await ctx.audit.write(
+            action=(
+                "account.connected"
+                if connection.status == ConnectionStatus.CONNECTED
+                else "account.publisher-selection-required"
+            ),
+            target=connection.publisher_id,
+            metadata={"publisherCount": len(accounts)},
+        )
+        return connection
+
+    async def select_publisher(
+        self,
+        ctx,
+        *,
+        publisher_id: str,
+        now: int | None = None,
+    ) -> AwinConnection:
+        token = await ctx.secrets.get(ACCESS_TOKEN_SECRET_KEY)
+        if not token:
+            raise ValueError("Connect an Awin account before selecting a publisher.")
+
+        accounts = await AwinApiClient(ctx.http).publisher_accounts(access_token=token)
+        selected = self._select_account(accounts, publisher_id)
+        timestamp = int(time.time()) if now is None else int(now)
+        connection = AwinConnection(
+            status=ConnectionStatus.CONNECTED,
+            publisher_id=selected.id,
+            publisher_name=selected.name,
+            user_role=selected.user_role,
+            last_verified_at=timestamp,
+        )
+        await self._save_connection(ctx, connection)
+        await ctx.audit.write(
+            action="account.publisher-selected",
+            target=selected.id,
+        )
+        return connection
+
+    async def disconnect(self, ctx) -> None:
+        await ctx.secrets.delete(ACCESS_TOKEN_SECRET_KEY)
+        await ctx.storage.delete(CONNECTION_STORAGE_KEY)
+        await ctx.audit.write(action="account.disconnected")
+
+    async def connection_view(self, ctx) -> dict[str, Any]:
+        connection = await self.connection(ctx)
+        token_configured = await ctx.secrets.get(ACCESS_TOKEN_SECRET_KEY) is not None
+        result = connection.to_dict()
+        result["tokenConfigured"] = token_configured
+        result["connectionReady"] = (
+            token_configured and connection.status == ConnectionStatus.CONNECTED
+        )
+        return result
 
     async def list_creatives(self, ctx) -> list[Creative]:
         raw = await ctx.storage.get(STORAGE_KEY)
@@ -138,11 +284,59 @@ class AwinAffiliateSkill:
         )
         return {"import": result}
 
+    async def _manage_setup_status(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        return {"connection": await self.connection_view(ctx)}
+
+    async def _manage_setup_connect(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        token = payload.get("accessToken")
+        publisher_id = payload.get("publisherId")
+        connection = await self.connect(
+            ctx,
+            access_token=str(token) if token is not None else "",
+            publisher_id=str(publisher_id) if publisher_id is not None else None,
+        )
+        return {
+            "connection": {
+                **connection.to_dict(),
+                "tokenConfigured": True,
+                "connectionReady": connection.status == ConnectionStatus.CONNECTED,
+            }
+        }
+
+    async def _manage_setup_select_publisher(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        publisher_id = str(payload.get("publisherId", "")).strip()
+        if not publisher_id:
+            raise ValueError("publisherId is required.")
+        connection = await self.select_publisher(ctx, publisher_id=publisher_id)
+        return {
+            "connection": {
+                **connection.to_dict(),
+                "tokenConfigured": True,
+                "connectionReady": True,
+            }
+        }
+
+    async def _manage_setup_disconnect(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        await self.disconnect(ctx)
+        return {
+            "connection": {
+                **AwinConnection(ConnectionStatus.NOT_CONNECTED).to_dict(),
+                "tokenConfigured": False,
+                "connectionReady": False,
+            }
+        }
+
     async def _manage_describe(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         return {
             "skillId": SKILL_ID,
             "standalone": True,
             "requiresRecurringPosts": False,
+            "setup": {
+                "authentication": "Awin user access token",
+                "publisherDiscovery": True,
+                "autoSelectSinglePublisher": True,
+                "storesTokenInSecretStorage": True,
+            },
             "availableSources": [
                 {
                     "id": "manual_html",
@@ -153,7 +347,7 @@ class AwinAffiliateSkill:
                 }
             ],
             "limitations": [
-                "Authenticated Awin API sync is not enabled in this slice.",
+                "Authenticated creative-library synchronization is not enabled yet.",
                 "Manual imports do not mark omitted creatives as missing because a pasted snippet may be incomplete.",
             ],
         }
