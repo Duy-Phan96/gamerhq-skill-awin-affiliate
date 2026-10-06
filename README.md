@@ -2,7 +2,7 @@
 
 Standalone Awin Affiliate Skill for GamerHQ-compatible hosts.
 
-> Early development: the Skill now includes secure Awin account connection, publisher/advertiser discovery, authoritative Creative synchronization, and host-neutral Creative Library management.
+> Early development: the Skill now includes secure Awin account connection, publisher/advertiser discovery, authoritative Creative synchronization, Creative Library management, and preview-confirmed Discord posting.
 
 ## Goals
 
@@ -37,7 +37,10 @@ The current implementation covers:
 11. bounded Creative Library pagination and filters,
 12. Discord-native preview payloads,
 13. single/multi-select and advertiser-wide enable/disable controls,
-14. offline tests with fake HTTP and secret ports — no real Awin credentials required.
+14. preview-confirmed Post Now with specific/random/next Creative selection,
+15. Discord-native image embeds with a safe View offer link button,
+16. mandatory visible affiliate disclosure on every sent post,
+17. offline tests with fake HTTP/secret/Discord ports — no real Awin credentials required.
 
 The Skill never imports GamerHQ host internals and remains usable without Recurring Posts.
 
@@ -47,7 +50,7 @@ Next slices:
 
 - authenticated Creative source adapter if required by Awin platform limitations
 - host rendering for Creative Library controls
-- Discord-native affiliate posts
+- host rendering for the full Post Now wizard
 - standalone campaign scheduler and rotation
 - post history and admin diagnostics
 
