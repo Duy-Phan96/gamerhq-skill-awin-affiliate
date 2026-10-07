@@ -91,7 +91,9 @@ Status: diagnostics/hardening foundation implemented in 0.8.0.
 - blocked campaign visibility in health detail
 - no raw exception text in persisted history
 - explicit secret-redaction regression coverage
-- release/setup/security/compliance documentation completed in the repository
-- remaining: host rendering and full permission UX in the GamerHQ host
+- release/setup/security/compliance documentation completed in this repository
+- no remaining Host/UI implementation is owned by this repository
+- downstream hosts may independently render the public Management contracts
+- any missing Host/Runtime capability must be requested through a handoff
 
 Awin Affiliate must continue to operate when Recurring Posts is not installed.
