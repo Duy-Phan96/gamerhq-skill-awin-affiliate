@@ -64,7 +64,7 @@ Status: implemented as preview-confirmed management contracts in 0.5.0.
 
 ## Slice 6 — Standalone campaigns
 
-Status: core campaign lifecycle implemented in 0.6.0.
+Status: core lifecycle implemented in 0.6.0; management/history extension implemented in 0.7.0.
 
 - campaign model owned by this Skill
 - shared Runtime scheduler jobs (no Recurring Posts dependency)
@@ -74,6 +74,10 @@ Status: core campaign lifecycle implemented in 0.6.0.
 - persisted campaign state and scheduler jobs survive restart
 - blocked state when zero eligible Creatives remain
 - rotation advances only after a successful Discord send
+- stable-ID campaign edit
+- non-mutating next-Creative preview
+- derived active/paused/blocked status
+- bounded recent sent/blocked/failed history
 
 ## Slice 7 — History, hardening and documentation
 
