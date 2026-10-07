@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gamerhq-skill-awin-affiliate"
-version = "0.5.0"
+version = "0.6.0"
 description = "Standalone Awin Affiliate Skill for GamerHQ-compatible hosts"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -28,5 +28,6 @@ capabilities = [
   "discord.channels.read",
   "discord.messages.send",
   "discord.embeds.send",
+  "scheduler.jobs",
   "audit.write",
 ]
