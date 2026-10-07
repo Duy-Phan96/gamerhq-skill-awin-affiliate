@@ -32,23 +32,24 @@ The current implementation covers:
 6. Awin programme / advertiser discovery,
 7. parsing supported Awin HTML banner snippets,
 8. normalizing and persisting a Creative Library,
-9. a shared Creative synchronization engine with explicit source authority,
-10. safe NEW / ACTIVE / MISSING / restored transitions for authoritative sources,
-11. bounded Creative Library pagination and filters,
-12. Discord-native preview payloads,
-13. single/multi-select and advertiser-wide enable/disable controls,
-14. preview-confirmed Post Now with specific/random/next Creative selection,
-15. Discord-native image embeds with a safe View offer link button,
-16. mandatory visible affiliate disclosure on every sent post,
-17. standalone recurring campaigns with fixed/sequential/random/shuffle rotation,
-18. persisted scheduler jobs, pause/resume/delete and run-now controls,
-19. campaign edit without changing stable campaign IDs,
-20. non-mutating next-Creative preview and derived campaign status,
-21. bounded recent campaign delivery history,
-22. blocked-state handling when no eligible Creative remains,
-23. safe aggregate diagnostics for setup, Creative states, campaign states and delivery outcomes,
-24. richer health detail including blocked campaign count without exposing credentials,
-25. offline tests with fake HTTP/secret/Discord/scheduler ports — no real Awin credentials required.
+9. importing multi-advertiser banners from saved My Creative HTML pages,
+10. a shared Creative synchronization engine with explicit source authority,
+11. safe NEW / ACTIVE / MISSING / restored transitions for authoritative sources,
+12. bounded Creative Library pagination and filters,
+13. Discord-native preview payloads,
+14. single/multi-select and advertiser-wide enable/disable controls,
+15. preview-confirmed Post Now with specific/random/next Creative selection,
+16. Discord-native image embeds with a safe View offer link button,
+17. mandatory visible affiliate disclosure on every sent post,
+18. standalone recurring campaigns with fixed/sequential/random/shuffle rotation,
+19. persisted scheduler jobs, pause/resume/delete and run-now controls,
+20. campaign edit without changing stable campaign IDs,
+21. non-mutating next-Creative preview and derived campaign status,
+22. bounded recent campaign delivery history,
+23. blocked-state handling when no eligible Creative remains,
+24. safe aggregate diagnostics for setup, Creative states, campaign states and delivery outcomes,
+25. richer health detail including blocked campaign count without exposing credentials,
+26. offline tests with fake HTTP/secret/Discord/scheduler ports — no real Awin credentials required.
 
 The Skill never imports GamerHQ host internals and remains usable without Recurring Posts.
 
@@ -56,7 +57,7 @@ The Skill never imports GamerHQ host internals and remains usable without Recurr
 
 Next slices:
 
-- authenticated Creative source adapter if required by Awin platform limitations
+- optional authenticated Creative source adapter only if a documented/safely testable Awin surface becomes available
 - host rendering for Creative Library controls
 - host rendering for the full Post Now wizard
 - host rendering for campaign management and diagnostics
@@ -98,3 +99,10 @@ python -m pytest
 ## Status
 
 Pre-1.0. Public contracts and storage keys should still be treated deliberately so migrations remain understandable.
+
+
+## Saved My Creative HTML import
+
+When the complete banner library is unavailable through a documented Publisher API, an administrator can save/export the rendered My Creative HTML and import it through the Skill.
+
+The importer can discover multiple advertisers from Awin tracking links in one page. Imports are **UPSERT_ONLY by default**. Missing detection is enabled only when the administrator explicitly supplies one `completeAdvertiserId`, confirming that the saved HTML represents the complete Creative set for that advertiser. Other advertisers in the same page remain UPSERT_ONLY.
