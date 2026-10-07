@@ -46,7 +46,9 @@ The current implementation covers:
 20. non-mutating next-Creative preview and derived campaign status,
 21. bounded recent campaign delivery history,
 22. blocked-state handling when no eligible Creative remains,
-23. offline tests with fake HTTP/secret/Discord/scheduler ports — no real Awin credentials required.
+23. safe aggregate diagnostics for setup, Creative states, campaign states and delivery outcomes,
+24. richer health detail including blocked campaign count without exposing credentials,
+25. offline tests with fake HTTP/secret/Discord/scheduler ports — no real Awin credentials required.
 
 The Skill never imports GamerHQ host internals and remains usable without Recurring Posts.
 
