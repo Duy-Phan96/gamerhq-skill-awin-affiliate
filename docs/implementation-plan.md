@@ -27,7 +27,7 @@ Status: implemented.
 
 ## Slice 3 — Advertisers and authoritative sync
 
-Status: domain sync engine implemented; live authoritative Creative source still pending.
+Status: domain sync engine implemented; safe saved-page Creative import implemented in 0.9.0; live authenticated Creative source remains conditional on a supported/testable Awin surface.
 
 - publisher programme / advertiser discovery through supported Awin APIs
 - `CreativeSource` protocol and explicit source authority
@@ -35,7 +35,9 @@ Status: domain sync engine implemented; live authoritative Creative source still
 - manual HTML source is explicitly `UPSERT_ONLY`
 - authoritative snapshots support new, updated, missing and restored transitions
 - missing detection is limited to records owned by the authoritative source
-- future authenticated Creative importer remains isolated behind the source boundary
+- saved My Creative HTML can import multiple advertiser scopes without automating login
+- saved-page imports are UPSERT_ONLY unless one advertiser is explicitly confirmed complete
+- future authenticated Creative importer remains isolated behind the source boundary and is not guessed from private endpoints
 
 ## Slice 4 — Creative Library management
 
