@@ -36,7 +36,7 @@ from .creative_library import (
     set_enabled as set_creatives_enabled,
 )
 from .diagnostics import build_diagnostics
-from .imports import AwinHtmlCreativeSource
+from .imports import AwinHtmlCreativeSource, AwinSavedPageCreativeSource
 from .models import Creative
 from .posting import (
     POST_STATE_KEY,
@@ -57,6 +57,7 @@ PREVIEW_CREATIVE_API = "awin-affiliate.creatives.preview.v1"
 SET_CREATIVES_ENABLED_API = "awin-affiliate.creatives.set-enabled.v1"
 SET_ADVERTISER_CREATIVES_ENABLED_API = "awin-affiliate.creatives.set-advertiser-enabled.v1"
 IMPORT_HTML_API = "awin-affiliate.creatives.import-html.v1"
+IMPORT_SAVED_HTML_API = "awin-affiliate.creatives.import-saved-html.v1"
 DESCRIBE_API = "awin-affiliate.describe.v1"
 SETUP_STATUS_API = "awin-affiliate.setup.status.v1"
 SETUP_CONNECT_API = "awin-affiliate.setup.connect.v1"
@@ -82,7 +83,7 @@ class AwinAffiliateSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Awin Affiliate",
-        version="0.8.0",
+        version="0.9.0",
         runtime_api_version="1",
         description="Import and manage Awin affiliate creatives without depending on another Skill.",
         author="GamerHQ",
@@ -104,6 +105,7 @@ class AwinAffiliateSkill:
                 ManagementApiContract(SET_CREATIVES_ENABLED_API, "Enable or disable selected Awin creatives."),
                 ManagementApiContract(SET_ADVERTISER_CREATIVES_ENABLED_API, "Enable or disable matching creatives for one advertiser."),
                 ManagementApiContract(IMPORT_HTML_API, "Import supported Awin image creative HTML."),
+                ManagementApiContract(IMPORT_SAVED_HTML_API, "Import Awin image creatives from a saved My Creative HTML page."),
                 ManagementApiContract(DESCRIBE_API, "Describe current Awin Affiliate capabilities and limitations."),
                 ManagementApiContract(SETUP_STATUS_API, "Read masked Awin connection status."),
                 ManagementApiContract(SETUP_CONNECT_API, "Verify and securely store an Awin access token."),
@@ -129,6 +131,7 @@ class AwinAffiliateSkill:
 
     def __init__(self) -> None:
         self._manual_source = AwinHtmlCreativeSource()
+        self._saved_page_source = AwinSavedPageCreativeSource()
         self._creative_locks: dict[int, asyncio.Lock] = {}
         self._campaign_locks: dict[tuple[int, str], asyncio.Lock] = {}
 
@@ -145,6 +148,7 @@ class AwinAffiliateSkill:
         ctx.management.expose(SET_CREATIVES_ENABLED_API, self._manage_set_creatives_enabled)
         ctx.management.expose(SET_ADVERTISER_CREATIVES_ENABLED_API, self._manage_set_advertiser_creatives_enabled)
         ctx.management.expose(IMPORT_HTML_API, self._manage_import_html)
+        ctx.management.expose(IMPORT_SAVED_HTML_API, self._manage_import_saved_html)
         ctx.management.expose(DESCRIBE_API, self._manage_describe)
         ctx.management.expose(SETUP_STATUS_API, self._manage_setup_status)
         ctx.management.expose(SETUP_CONNECT_API, self._manage_setup_connect)
@@ -385,6 +389,48 @@ class AwinAffiliateSkill:
             advertiser_name=advertiser_name,
         )
         return {"import": result}
+
+    async def _manage_import_saved_html(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        html = payload.get("html")
+        complete_advertiser_id = str(payload.get("completeAdvertiserId", "")).strip() or None
+        snapshots = self._saved_page_source.snapshots(
+            str(html) if html is not None else "",
+            complete_advertiser_id=complete_advertiser_id,
+        )
+
+        results = []
+        totals = {
+            "groups": len(snapshots),
+            "found": 0,
+            "new": 0,
+            "updated": 0,
+            "missing": 0,
+            "restored": 0,
+            "unchanged": 0,
+        }
+        for snapshot in snapshots:
+            result = await self.sync_snapshot(ctx, snapshot=snapshot)
+            row = result.to_dict()
+            results.append(row)
+            for key in ("found", "new", "updated", "missing", "restored", "unchanged"):
+                totals[key] += int(row[key])
+
+        await ctx.audit.write(
+            action="creatives.saved-html-imported",
+            target=complete_advertiser_id,
+            metadata={
+                "groups": totals["groups"],
+                "found": totals["found"],
+                "authoritativeAdvertiser": complete_advertiser_id,
+            },
+        )
+        return {
+            "import": {
+                **totals,
+                "authoritativeAdvertiserId": complete_advertiser_id,
+                "groups": results,
+            }
+        }
 
     async def _manage_setup_status(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         return {"setup": await AwinSetupService(ctx).status()}
@@ -860,6 +906,15 @@ class AwinAffiliateSkill:
                     "networkRequired": False,
                     "credentialsRequired": False,
                     "supportsMissingDetection": False,
+                },
+                {
+                    "id": "saved_my_creative_html",
+                    "label": "Saved My Creative HTML",
+                    "networkRequired": False,
+                    "credentialsRequired": False,
+                    "supportsMultipleAdvertisers": True,
+                    "supportsMissingDetection": True,
+                    "missingDetectionRequiresExplicitCompleteAdvertiser": True,
                 },
                 {
                     "id": "awin_api",
