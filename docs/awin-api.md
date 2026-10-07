@@ -57,3 +57,19 @@ Awin documents a general API throttling limit of 20 calls per minute per user. I
 The current official publisher API documentation exposes accounts, programmes, offers, deeplink/reporting and product-feed capabilities, but this implementation does not yet rely on an official endpoint for the complete image-banner Creative Library.
 
 The `CreativeSource` boundary remains intentionally separate so a future supported source can replace or complement the manual HTML fallback without changing the Creative domain model.
+
+
+## Saved My Creative HTML fallback
+
+Awin's documented My Creative experience remains a platform tool rather than a complete Publisher API Creative-library endpoint used by this Skill.
+
+The Skill therefore supports an offline saved-page fallback:
+
+- save/export the rendered My Creative HTML;
+- import the HTML without sharing an Awin browser session with the Skill;
+- Awin tracking/image URLs are normalized into the same Creative model;
+- multiple advertisers may be discovered from one saved page;
+- every advertiser is UPSERT_ONLY by default;
+- optional `completeAdvertiserId` makes only that advertiser authoritative after explicit administrator confirmation.
+
+This fallback does not automate login and does not depend on undocumented private Awin endpoints.
