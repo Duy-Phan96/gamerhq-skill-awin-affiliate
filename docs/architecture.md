@@ -10,14 +10,14 @@ It must not import GamerHQ application internals and must not depend on Recurrin
 
 Creative ingestion is intentionally provider-adapter based.
 
-Current source:
+Current sources:
 
-- `AwinHtmlCreativeSource` — offline fallback parser for Awin image-banner snippets.
+- `AwinHtmlCreativeSource` — offline fallback parser for Awin image-banner snippets;
+- `AwinSavedPageCreativeSource` — offline parser for saved My Creative HTML pages, grouped by publisher + advertiser.
 
-Planned sources:
+Planned source:
 
-- official Awin API-backed source, where the publisher API exposes the needed creative data;
-- authenticated importer only if the required publisher creative library cannot be retrieved through a supported API.
+- authenticated importer only if the complete publisher Creative Library becomes available through a supported or safely testable Awin surface.
 
 Parsing or scraping selectors must stay isolated inside an adapter.
 
@@ -27,11 +27,9 @@ A manual paste can be incomplete. Therefore an HTML import may add or refresh re
 
 Missing-state transitions belong to authoritative full synchronization sources only.
 
-## SDK gap for authenticated Awin access
+## Authenticated Awin access
 
-The current public GamerHQ Skill Runtime exposes a capability identifier for external HTTP access, but the SkillContext does not yet expose a host-neutral HTTP client port. It also does not expose a dedicated secret-storage port.
-
-Until those contracts exist, this repository will not bypass the Skill boundary through GamerHQ internals. Token-backed API sync should be added after the public SDK can provide safe HTTP and secret handling.
+The public GamerHQ Skill Runtime now provides host-neutral external HTTP and encrypted Skill secret-storage ports. This Skill uses only those public contracts for Awin authentication and API calls; it never reads GamerHQ environment variables, databases or host internals.
 
 ## Storage
 
@@ -40,3 +38,8 @@ Current stable key:
 - `creatives.v1`
 
 Records use a normalized `Creative` model so future sources can converge on the same local library.
+
+
+## Saved-page authority
+
+A saved My Creative page can be partial because of filters or pagination. Therefore all saved-page groups are UPSERT_ONLY by default. The caller may explicitly mark one advertiser ID as complete; only that advertiser's snapshot becomes authoritative and may transition previously source-owned Creatives to MISSING.
