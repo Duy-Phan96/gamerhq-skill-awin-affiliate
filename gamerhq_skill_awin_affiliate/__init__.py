@@ -1,6 +1,6 @@
 from .awin_api import AwinAccount, AwinApiError, AwinClient, AwinProgramme
 from .creative_sources import CreativeSnapshot, CreativeSource, CreativeSourceAuthority
-from .imports import AwinHtmlCreativeSource, CreativeImportError
+from .imports import AwinHtmlCreativeSource, AwinSavedPageCreativeSource, CreativeImportError
 from .models import Creative, CreativeState
 from .sync import CreativeSyncResult, apply_creative_snapshot
 from .skill import (
@@ -23,6 +23,7 @@ from .skill import (
     SET_ADVERTISER_CREATIVES_ENABLED_API,
     SET_CREATIVES_ENABLED_API,
     IMPORT_HTML_API,
+    IMPORT_SAVED_HTML_API,
     SETUP_ACCOUNTS_API,
     SETUP_CONNECT_API,
     SETUP_DISCONNECT_API,
@@ -56,6 +57,7 @@ __all__ = [
     "AwinClient",
     "AwinProgramme",
     "AwinHtmlCreativeSource",
+    "AwinSavedPageCreativeSource",
     "Creative",
     "CreativeSnapshot",
     "CreativeSource",
@@ -73,6 +75,7 @@ __all__ = [
     "SET_ADVERTISER_CREATIVES_ENABLED_API",
     "SET_CREATIVES_ENABLED_API",
     "IMPORT_HTML_API",
+    "IMPORT_SAVED_HTML_API",
     "SETUP_ACCOUNTS_API",
     "SETUP_CONNECT_API",
     "SETUP_DISCONNECT_API",
