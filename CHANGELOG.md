@@ -6,10 +6,14 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 
 ## [Unreleased]
 
-### Remaining before 1.0
+### Changed
 
-- GamerHQ host rendering for setup, Creative Library, Post Now and campaigns.
-- Final live acceptance with a dedicated test Awin account / non-production credentials.
+- Adopted autonomous repository ownership and handoff-based cross-project coordination.
+- Clarified that GamerHQ Host rendering and deployment are downstream concerns, not release blockers owned by this Skill repository.
+
+### Remaining Skill-owned work before 1.0
+
+- Final package/API review and live provider validation with a dedicated test Awin account or non-production credentials where practical.
 - Decide whether an authenticated Creative source is necessary if Awin exposes a supported/testable complete Creative Library surface.
 
 ## [0.9.0]
