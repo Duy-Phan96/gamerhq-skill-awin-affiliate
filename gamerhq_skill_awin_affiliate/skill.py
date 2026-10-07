@@ -35,6 +35,7 @@ from .creative_library import (
     preview_view as creative_preview_view,
     set_enabled as set_creatives_enabled,
 )
+from .diagnostics import build_diagnostics
 from .imports import AwinHtmlCreativeSource
 from .models import Creative
 from .posting import (
@@ -74,13 +75,14 @@ CAMPAIGN_GET_API = "awin-affiliate.campaigns.get.v1"
 CAMPAIGN_UPDATE_API = "awin-affiliate.campaigns.update.v1"
 CAMPAIGN_PREVIEW_NEXT_API = "awin-affiliate.campaigns.preview-next.v1"
 CAMPAIGN_HISTORY_API = "awin-affiliate.campaigns.history.v1"
+DIAGNOSTICS_API = "awin-affiliate.diagnostics.v1"
 
 
 class AwinAffiliateSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Awin Affiliate",
-        version="0.7.0",
+        version="0.8.0",
         runtime_api_version="1",
         description="Import and manage Awin affiliate creatives without depending on another Skill.",
         author="GamerHQ",
@@ -120,6 +122,7 @@ class AwinAffiliateSkill:
                 ManagementApiContract(CAMPAIGN_UPDATE_API, "Edit a recurring Awin campaign without changing its stable ID."),
                 ManagementApiContract(CAMPAIGN_PREVIEW_NEXT_API, "Preview the next eligible Creative for a campaign without mutating rotation state."),
                 ManagementApiContract(CAMPAIGN_HISTORY_API, "Read bounded recent delivery history for one Awin campaign."),
+                ManagementApiContract(DIAGNOSTICS_API, "Read safe aggregate Awin Skill diagnostics without exposing credentials."),
             )
         ),
     )
@@ -160,6 +163,7 @@ class AwinAffiliateSkill:
         ctx.management.expose(CAMPAIGN_UPDATE_API, self._manage_campaign_update)
         ctx.management.expose(CAMPAIGN_PREVIEW_NEXT_API, self._manage_campaign_preview_next)
         ctx.management.expose(CAMPAIGN_HISTORY_API, self._manage_campaign_history)
+        ctx.management.expose(DIAGNOSTICS_API, self._manage_diagnostics)
         ctx.scheduler.register_handler(CAMPAIGN_HANDLER_ID, self._execute_campaign)
 
     async def enable(self, ctx) -> None:
@@ -176,16 +180,27 @@ class AwinAffiliateSkill:
 
     async def health_check(self, ctx) -> SkillHealth:
         creatives = await self.list_creatives(ctx)
-        status = await AwinSetupService(ctx).status()
-        if not status["connected"]:
-            return SkillHealth("PASS", f"Awin not connected; {len(creatives)} local creative(s).")
-        if not status["publisherSelected"]:
-            return SkillHealth("PASS", f"Awin connected; publisher selection required; {len(creatives)} local creative(s).")
-        publisher = status["publisher"] or {}
-        return SkillHealth(
-            "PASS",
-            f"Awin connected to {publisher.get('name') or publisher.get('id')}; {len(creatives)} local creative(s).",
+        setup = await AwinSetupService(ctx).status()
+        campaigns = await self._load_campaigns(ctx)
+        blocked = sum(1 for campaign in campaigns.values() if campaign.enabled and campaign.blocked_reason)
+        if not setup["connected"]:
+            return SkillHealth(
+                "PASS",
+                f"Awin not connected; {len(creatives)} local creative(s); {len(campaigns)} campaign(s).",
+            )
+        if not setup["publisherSelected"]:
+            return SkillHealth(
+                "PASS",
+                f"Awin connected; publisher selection required; {len(creatives)} local creative(s).",
+            )
+        publisher = setup["publisher"] or {}
+        detail = (
+            f"Awin connected to {publisher.get('name') or publisher.get('id')}; "
+            f"{len(creatives)} creative(s); {len(campaigns)} campaign(s)"
         )
+        if blocked:
+            detail += f"; {blocked} blocked campaign(s)"
+        return SkillHealth("PASS", detail + ".")
 
     async def list_creatives(self, ctx) -> list[Creative]:
         raw = await ctx.storage.get(STORAGE_KEY)
@@ -818,6 +833,20 @@ class AwinAffiliateSkill:
             limit=limit,
         )
         return {"campaignId": campaign_id, "history": rows}
+
+    async def _manage_diagnostics(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        setup = await AwinSetupService(ctx).status()
+        creatives = await self.list_creatives(ctx)
+        campaigns = await self._load_campaigns(ctx)
+        history = await ctx.storage.get(CAMPAIGN_HISTORY_KEY)
+        return {
+            "diagnostics": build_diagnostics(
+                setup_status=setup,
+                creatives=creatives,
+                campaigns=campaigns.values(),
+                history=history,
+            )
+        }
 
     async def _manage_describe(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         return {

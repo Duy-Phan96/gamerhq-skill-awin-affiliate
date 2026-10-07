@@ -81,11 +81,14 @@ Status: core lifecycle implemented in 0.6.0; management/history extension implem
 
 ## Slice 7 — History, hardening and documentation
 
-- minimal post history
-- admin diagnostics
-- permission model
-- secret redaction tests
-- failure-state UX
-- complete README/setup/security docs
+Status: diagnostics/hardening foundation implemented in 0.8.0.
+
+- bounded campaign delivery history
+- safe aggregate admin diagnostics
+- masked setup/token state only
+- blocked campaign visibility in health detail
+- no raw exception text in persisted history
+- explicit secret-redaction regression coverage
+- remaining: host rendering, full permission UX and release documentation
 
 Awin Affiliate must continue to operate when Recurring Posts is not installed.
