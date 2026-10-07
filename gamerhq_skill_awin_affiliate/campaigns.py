@@ -10,6 +10,8 @@ CAMPAIGNS_KEY = "campaigns.v1"
 CAMPAIGN_HANDLER_ID = "awin-affiliate.campaign.execute.v1"
 MIN_INTERVAL_SECONDS = 15 * 60
 MAX_CAMPAIGNS = 50
+CAMPAIGN_HISTORY_KEY = "campaign-history.v1"
+MAX_HISTORY_ENTRIES = 100
 ROTATION_MODES = frozenset({"fixed", "sequential", "random", "shuffle"})
 _ELIGIBLE_STATES = {CreativeState.ACTIVE, CreativeState.NEW}
 
@@ -157,3 +159,86 @@ def choose_campaign_creative(
         last_creative_id=selected_id,
         blocked_reason=None,
     )
+
+
+def campaign_status(campaign: Campaign, creatives: Iterable[Creative]) -> dict[str, Any]:
+    eligible = eligible_for_campaign(campaign, creatives)
+    return {
+        **campaign.to_dict(),
+        "eligibleCreativeCount": len(eligible),
+        "configuredCreativeCount": len(campaign.selected_creative_ids),
+        "status": (
+            "paused"
+            if not campaign.enabled
+            else "blocked"
+            if campaign.blocked_reason
+            else "active"
+        ),
+    }
+
+
+def update_campaign(
+    campaign: Campaign,
+    *,
+    name: str,
+    advertiser_id: str,
+    channel_id: int,
+    selected_creative_ids: tuple[str, ...],
+    rotation: str,
+    interval_seconds: int,
+    avoid_immediate_repeat: bool,
+) -> Campaign:
+    reset_rotation = (
+        campaign.advertiser_id != advertiser_id
+        or campaign.selected_creative_ids != selected_creative_ids
+        or campaign.rotation != rotation
+    )
+    updated = replace(
+        campaign,
+        name=name,
+        advertiser_id=advertiser_id,
+        channel_id=channel_id,
+        selected_creative_ids=selected_creative_ids,
+        rotation=rotation,
+        interval_seconds=interval_seconds,
+        avoid_immediate_repeat=avoid_immediate_repeat,
+        blocked_reason=None,
+        last_creative_id=None if reset_rotation else campaign.last_creative_id,
+        sequential_index=0 if reset_rotation else campaign.sequential_index,
+        shuffle_remaining=() if reset_rotation else campaign.shuffle_remaining,
+    )
+    validate_campaign(updated)
+    return updated
+
+
+def append_history(
+    current: Any,
+    *,
+    campaign_id: str,
+    outcome: str,
+    occurred_at: int,
+    creative_id: str | None = None,
+    channel_id: int | None = None,
+    message_id: int | None = None,
+    reason: str | None = None,
+) -> list[dict[str, Any]]:
+    rows = list(current) if isinstance(current, list) else []
+    entry = {
+        "campaignId": campaign_id,
+        "outcome": outcome,
+        "occurredAt": int(occurred_at),
+        "creativeId": creative_id,
+        "channelId": channel_id,
+        "messageId": message_id,
+        "reason": reason,
+    }
+    rows.append(entry)
+    return rows[-MAX_HISTORY_ENTRIES:]
+
+
+def history_for_campaign(current: Any, *, campaign_id: str, limit: int = 25) -> list[dict[str, Any]]:
+    if not 1 <= limit <= MAX_HISTORY_ENTRIES:
+        raise ValueError(f"History limit must be between 1 and {MAX_HISTORY_ENTRIES}.")
+    rows = current if isinstance(current, list) else []
+    filtered = [dict(item) for item in rows if isinstance(item, Mapping) and item.get("campaignId") == campaign_id]
+    return list(reversed(filtered[-limit:]))
