@@ -5,6 +5,11 @@ from .models import Creative, CreativeState
 from .sync import CreativeSyncResult, apply_creative_snapshot
 from .skill import (
     ADVERTISERS_LIST_API,
+    CAMPAIGN_CREATE_API,
+    CAMPAIGN_DELETE_API,
+    CAMPAIGN_LIST_API,
+    CAMPAIGN_RUN_NOW_API,
+    CAMPAIGN_SET_ACTIVE_API,
     DESCRIBE_API,
     GET_CREATIVE_API,
     PREVIEW_CREATIVE_API,
@@ -31,6 +36,11 @@ def create_skill():
 
 __all__ = [
     "ADVERTISERS_LIST_API",
+    "CAMPAIGN_CREATE_API",
+    "CAMPAIGN_DELETE_API",
+    "CAMPAIGN_LIST_API",
+    "CAMPAIGN_RUN_NOW_API",
+    "CAMPAIGN_SET_ACTIVE_API",
     "AwinAccount",
     "AwinAffiliateSkill",
     "AwinApiError",
