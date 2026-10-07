@@ -64,12 +64,16 @@ Status: implemented as preview-confirmed management contracts in 0.5.0.
 
 ## Slice 6 — Standalone campaigns
 
+Status: core campaign lifecycle implemented in 0.6.0.
+
 - campaign model owned by this Skill
-- scheduler jobs via public Runtime scheduler
+- shared Runtime scheduler jobs (no Recurring Posts dependency)
 - fixed, sequential, random and shuffle rotation
-- avoid-immediate-repeat
-- persistence and restart recovery
-- blocked state for zero eligible creatives
+- avoid-immediate-repeat for random/shuffle
+- pause/resume/delete/run-now
+- persisted campaign state and scheduler jobs survive restart
+- blocked state when zero eligible Creatives remain
+- rotation advances only after a successful Discord send
 
 ## Slice 7 — History, hardening and documentation
 

@@ -20,7 +20,7 @@ def test_source_stays_portable():
 def test_factory_matches_stable_skill_identity():
     report = validate_skill_factory(create_skill, expected_skill_id="awin-affiliate")
     assert report.skill_id == "awin-affiliate"
-    assert report.version == "0.5.0"
+    assert report.version == "0.6.0"
 
 
 def test_static_package_metadata_matches_manifest():
@@ -30,4 +30,4 @@ def test_static_package_metadata_matches_manifest():
     )
     assert report.skill_id == "awin-affiliate"
     assert "storage.skill" in report.capabilities
-    assert "scheduler.jobs" not in report.capabilities
+    assert "scheduler.jobs" in report.capabilities
