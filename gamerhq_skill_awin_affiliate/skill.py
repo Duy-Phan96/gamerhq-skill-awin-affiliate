@@ -114,9 +114,13 @@ class AwinAffiliateSkill:
     def __init__(self) -> None:
         self._manual_source = AwinHtmlCreativeSource()
         self._creative_locks: dict[int, asyncio.Lock] = {}
+        self._campaign_locks: dict[tuple[int, str], asyncio.Lock] = {}
 
     def _creative_lock(self, guild_id: int) -> asyncio.Lock:
         return self._creative_locks.setdefault(guild_id, asyncio.Lock())
+
+    def _campaign_lock(self, guild_id: int, campaign_id: str) -> asyncio.Lock:
+        return self._campaign_locks.setdefault((guild_id, campaign_id), asyncio.Lock())
 
     async def register(self, ctx) -> None:
         ctx.management.expose(LIST_CREATIVES_API, self._manage_list_creatives)
@@ -522,31 +526,34 @@ class AwinAffiliateSkill:
         )
 
     async def _run_campaign(self, ctx, campaign_id: str) -> Mapping[str, Any]:
-        async with self._creative_lock(ctx.guild_id):
+        async with self._campaign_lock(ctx.guild_id, campaign_id):
             campaigns = await self._load_campaigns(ctx)
             campaign = campaigns.get(campaign_id)
             if campaign is None:
                 raise ValueError("Campaign was not found.")
+
             selected, updated = choose_campaign_creative(campaign, await self.list_creatives(ctx))
+            if selected is None:
+                campaigns[campaign.id] = updated
+                await self._save_campaigns(ctx, campaigns)
+                await ctx.audit.write(
+                    action="awin.campaign-blocked",
+                    target=campaign.id,
+                    metadata={"reason": updated.blocked_reason or "no-creative"},
+                )
+                return {"sent": False, "blocked": True, "reason": updated.blocked_reason}
+
+            rendered = render_post(selected)
+            message_id = await ctx.discord.send_message(
+                channel_id=campaign.channel_id,
+                content=rendered["content"],
+                embed=rendered["embed"],
+                allowed_mentions=None,
+                link_buttons=rendered["linkButtons"],
+            )
             campaigns[campaign.id] = updated
             await self._save_campaigns(ctx, campaigns)
 
-        if selected is None:
-            await ctx.audit.write(
-                action="awin.campaign-blocked",
-                target=campaign.id,
-                metadata={"reason": updated.blocked_reason or "no-creative"},
-            )
-            return {"sent": False, "blocked": True, "reason": updated.blocked_reason}
-
-        rendered = render_post(selected)
-        message_id = await ctx.discord.send_message(
-            channel_id=campaign.channel_id,
-            content=rendered["content"],
-            embed=rendered["embed"],
-            allowed_mentions=None,
-            link_buttons=rendered["linkButtons"],
-        )
         await ctx.audit.write(
             action="awin.campaign-sent",
             target=campaign.id,
