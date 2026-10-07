@@ -55,12 +55,12 @@ The Skill never imports GamerHQ host internals and remains usable without Recurr
 
 ## Roadmap
 
-Next slices:
+Next Skill-owned slices:
 
 - optional authenticated Creative source adapter only if a documented/safely testable Awin surface becomes available
-- host rendering for Creative Library controls
-- host rendering for the full Post Now wizard
-- host rendering for campaign management and diagnostics
+- additional provider-side capabilities only when they belong to this Skill and can be expressed through stable public contracts
+
+Downstream host rendering is not implemented from this repository. A GamerHQ-compatible host may independently consume the public Management contracts exposed by this Skill. Any missing Host/Runtime capability is handled through a handoff rather than cross-repository modification.
 
 ## Compliance
 
@@ -98,7 +98,9 @@ python -m pytest
 
 ## Status
 
-Pre-1.0. Public contracts and storage keys should still be treated deliberately so migrations remain understandable.
+Pre-1.0 and independently releasable.
+
+This repository owns only the Awin Skill package. A green Skill release does not imply a GamerHQ production deployment or require a synchronized Host release. Public contracts and storage keys should still be treated deliberately so migrations remain understandable.
 
 
 ## Saved My Creative HTML import
