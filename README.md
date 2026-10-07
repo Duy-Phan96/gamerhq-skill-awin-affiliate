@@ -42,8 +42,11 @@ The current implementation covers:
 16. mandatory visible affiliate disclosure on every sent post,
 17. standalone recurring campaigns with fixed/sequential/random/shuffle rotation,
 18. persisted scheduler jobs, pause/resume/delete and run-now controls,
-19. blocked-state handling when no eligible Creative remains,
-20. offline tests with fake HTTP/secret/Discord/scheduler ports — no real Awin credentials required.
+19. campaign edit without changing stable campaign IDs,
+20. non-mutating next-Creative preview and derived campaign status,
+21. bounded recent campaign delivery history,
+22. blocked-state handling when no eligible Creative remains,
+23. offline tests with fake HTTP/secret/Discord/scheduler ports — no real Awin credentials required.
 
 The Skill never imports GamerHQ host internals and remains usable without Recurring Posts.
 
@@ -54,7 +57,7 @@ Next slices:
 - authenticated Creative source adapter if required by Awin platform limitations
 - host rendering for Creative Library controls
 - host rendering for the full Post Now wizard
-- post history and admin diagnostics
+- host rendering for campaign management and diagnostics
 
 ## Compliance
 
