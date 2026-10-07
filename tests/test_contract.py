@@ -30,4 +30,4 @@ def test_static_package_metadata_matches_manifest():
     )
     assert report.skill_id == "awin-affiliate"
     assert "storage.skill" in report.capabilities
-    assert "scheduler.jobs" not in report.capabilities
+    assert "scheduler.jobs" in report.capabilities
