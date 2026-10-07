@@ -106,3 +106,16 @@ Pre-1.0. Public contracts and storage keys should still be treated deliberately 
 When the complete banner library is unavailable through a documented Publisher API, an administrator can save/export the rendered My Creative HTML and import it through the Skill.
 
 The importer can discover multiple advertisers from Awin tracking links in one page. Imports are **UPSERT_ONLY by default**. Missing detection is enabled only when the administrator explicitly supplies one `completeAdvertiserId`, confirming that the saved HTML represents the complete Creative set for that advertiser. Other advertisers in the same page remain UPSERT_ONLY.
+
+
+## Documentation
+
+- [Setup](docs/setup.md)
+- [Architecture](docs/architecture.md)
+- [Awin API integration](docs/awin-api.md)
+- [Affiliate disclosure & compliance](docs/compliance.md)
+- [Storage & public contracts](docs/storage-and-contracts.md)
+- [Implementation plan](docs/implementation-plan.md)
+- [Release checklist](docs/release-checklist.md)
+- [Security](SECURITY.md)
+- [Changelog](CHANGELOG.md)
