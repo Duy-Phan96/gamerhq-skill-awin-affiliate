@@ -17,7 +17,12 @@ from skill_runtime import (
 from .campaigns import (
     CAMPAIGNS_KEY,
     CAMPAIGN_HANDLER_ID,
+    CAMPAIGN_HISTORY_KEY,
     MAX_CAMPAIGNS,
+    append_history,
+    campaign_status,
+    history_for_campaign,
+    update_campaign,
     MIN_INTERVAL_SECONDS as CAMPAIGN_MIN_INTERVAL_SECONDS,
     Campaign,
     choose_campaign_creative,
@@ -65,13 +70,17 @@ CAMPAIGN_CREATE_API = "awin-affiliate.campaigns.create.v1"
 CAMPAIGN_SET_ACTIVE_API = "awin-affiliate.campaigns.set-active.v1"
 CAMPAIGN_DELETE_API = "awin-affiliate.campaigns.delete.v1"
 CAMPAIGN_RUN_NOW_API = "awin-affiliate.campaigns.run-now.v1"
+CAMPAIGN_GET_API = "awin-affiliate.campaigns.get.v1"
+CAMPAIGN_UPDATE_API = "awin-affiliate.campaigns.update.v1"
+CAMPAIGN_PREVIEW_NEXT_API = "awin-affiliate.campaigns.preview-next.v1"
+CAMPAIGN_HISTORY_API = "awin-affiliate.campaigns.history.v1"
 
 
 class AwinAffiliateSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Awin Affiliate",
-        version="0.6.0",
+        version="0.7.0",
         runtime_api_version="1",
         description="Import and manage Awin affiliate creatives without depending on another Skill.",
         author="GamerHQ",
@@ -107,6 +116,10 @@ class AwinAffiliateSkill:
                 ManagementApiContract(CAMPAIGN_SET_ACTIVE_API, "Pause or resume an Awin campaign."),
                 ManagementApiContract(CAMPAIGN_DELETE_API, "Delete an Awin campaign."),
                 ManagementApiContract(CAMPAIGN_RUN_NOW_API, "Run an Awin campaign immediately."),
+                ManagementApiContract(CAMPAIGN_GET_API, "Read one recurring Awin campaign with derived status."),
+                ManagementApiContract(CAMPAIGN_UPDATE_API, "Edit a recurring Awin campaign without changing its stable ID."),
+                ManagementApiContract(CAMPAIGN_PREVIEW_NEXT_API, "Preview the next eligible Creative for a campaign without mutating rotation state."),
+                ManagementApiContract(CAMPAIGN_HISTORY_API, "Read bounded recent delivery history for one Awin campaign."),
             )
         ),
     )
@@ -143,6 +156,10 @@ class AwinAffiliateSkill:
         ctx.management.expose(CAMPAIGN_SET_ACTIVE_API, self._manage_campaign_set_active)
         ctx.management.expose(CAMPAIGN_DELETE_API, self._manage_campaign_delete)
         ctx.management.expose(CAMPAIGN_RUN_NOW_API, self._manage_campaign_run_now)
+        ctx.management.expose(CAMPAIGN_GET_API, self._manage_campaign_get)
+        ctx.management.expose(CAMPAIGN_UPDATE_API, self._manage_campaign_update)
+        ctx.management.expose(CAMPAIGN_PREVIEW_NEXT_API, self._manage_campaign_preview_next)
+        ctx.management.expose(CAMPAIGN_HISTORY_API, self._manage_campaign_history)
         ctx.scheduler.register_handler(CAMPAIGN_HANDLER_ID, self._execute_campaign)
 
     async def enable(self, ctx) -> None:
@@ -536,6 +553,15 @@ class AwinAffiliateSkill:
             if selected is None:
                 campaigns[campaign.id] = updated
                 await self._save_campaigns(ctx, campaigns)
+                history = append_history(
+                    await ctx.storage.get(CAMPAIGN_HISTORY_KEY),
+                    campaign_id=campaign.id,
+                    outcome="blocked",
+                    occurred_at=int(time.time()),
+                    channel_id=campaign.channel_id,
+                    reason=updated.blocked_reason or "no-creative",
+                )
+                await ctx.storage.set(CAMPAIGN_HISTORY_KEY, history)
                 await ctx.audit.write(
                     action="awin.campaign-blocked",
                     target=campaign.id,
@@ -544,15 +570,38 @@ class AwinAffiliateSkill:
                 return {"sent": False, "blocked": True, "reason": updated.blocked_reason}
 
             rendered = render_post(selected)
-            message_id = await ctx.discord.send_message(
-                channel_id=campaign.channel_id,
-                content=rendered["content"],
-                embed=rendered["embed"],
-                allowed_mentions=None,
-                link_buttons=rendered["linkButtons"],
-            )
+            try:
+                message_id = await ctx.discord.send_message(
+                    channel_id=campaign.channel_id,
+                    content=rendered["content"],
+                    embed=rendered["embed"],
+                    allowed_mentions=None,
+                    link_buttons=rendered["linkButtons"],
+                )
+            except Exception:
+                history = append_history(
+                    await ctx.storage.get(CAMPAIGN_HISTORY_KEY),
+                    campaign_id=campaign.id,
+                    outcome="failed",
+                    occurred_at=int(time.time()),
+                    creative_id=selected.id,
+                    channel_id=campaign.channel_id,
+                    reason="discord-send-failed",
+                )
+                await ctx.storage.set(CAMPAIGN_HISTORY_KEY, history)
+                raise
             campaigns[campaign.id] = updated
             await self._save_campaigns(ctx, campaigns)
+            history = append_history(
+                await ctx.storage.get(CAMPAIGN_HISTORY_KEY),
+                campaign_id=campaign.id,
+                outcome="sent",
+                occurred_at=int(time.time()),
+                creative_id=selected.id,
+                channel_id=campaign.channel_id,
+                message_id=message_id,
+            )
+            await ctx.storage.set(CAMPAIGN_HISTORY_KEY, history)
 
         await ctx.audit.write(
             action="awin.campaign-sent",
@@ -663,6 +712,112 @@ class AwinAffiliateSkill:
         if not campaign_id:
             raise ValueError("campaignId is required.")
         return await self._run_campaign(ctx, campaign_id)
+
+    async def _manage_campaign_get(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        campaign_id = str(payload.get("campaignId", "")).strip()
+        if not campaign_id:
+            raise ValueError("campaignId is required.")
+        campaigns = await self._load_campaigns(ctx)
+        campaign = campaigns.get(campaign_id)
+        if campaign is None:
+            raise ValueError("Campaign was not found.")
+        return {"campaign": campaign_status(campaign, await self.list_creatives(ctx))}
+
+    async def _manage_campaign_update(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        campaign_id = str(payload.get("campaignId", "")).strip()
+        if not campaign_id:
+            raise ValueError("campaignId is required.")
+        async with self._campaign_lock(ctx.guild_id, campaign_id):
+            campaigns = await self._load_campaigns(ctx)
+            current = campaigns.get(campaign_id)
+            if current is None:
+                raise ValueError("Campaign was not found.")
+            try:
+                channel_id = int(payload.get("channelId", current.channel_id))
+                interval_seconds = int(payload.get("intervalSeconds", current.interval_seconds))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("channelId and intervalSeconds must be integers.") from exc
+            channel_id = await self._validated_post_channel(ctx, channel_id)
+            raw_selected = payload.get("selectedCreativeIds", list(current.selected_creative_ids))
+            if isinstance(raw_selected, str):
+                selected_ids = (raw_selected.strip(),) if raw_selected.strip() else ()
+            elif isinstance(raw_selected, list):
+                selected_ids = tuple(str(item).strip() for item in raw_selected if str(item).strip())
+            else:
+                raise ValueError("selectedCreativeIds must be a string or list.")
+            advertiser_id = str(payload.get("advertiserId", current.advertiser_id)).strip()
+            rotation = str(payload.get("rotation", current.rotation)).strip().lower()
+            name = str(payload.get("name", current.name)).strip()
+            avoid = payload.get("avoidImmediateRepeat", current.avoid_immediate_repeat)
+            if not isinstance(avoid, bool):
+                raise ValueError("avoidImmediateRepeat must be a boolean.")
+
+            known = {item.id: item for item in await self.list_creatives(ctx)}
+            if any(item not in known for item in selected_ids):
+                raise ValueError("Campaign contains unknown Creative IDs.")
+            if any(known[item].advertiser_id != advertiser_id for item in selected_ids):
+                raise ValueError("Campaign Creatives must belong to the selected advertiser.")
+
+            updated = update_campaign(
+                current,
+                name=name,
+                advertiser_id=advertiser_id,
+                channel_id=channel_id,
+                selected_creative_ids=selected_ids,
+                rotation=rotation,
+                interval_seconds=interval_seconds,
+                avoid_immediate_repeat=avoid,
+            )
+            campaigns[campaign_id] = updated
+            await self._save_campaigns(ctx, campaigns)
+        await self._schedule_campaign(ctx, updated)
+        await ctx.audit.write(action="awin.campaign-updated", target=campaign_id)
+        return {"campaign": campaign_status(updated, await self.list_creatives(ctx))}
+
+    async def _manage_campaign_preview_next(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        campaign_id = str(payload.get("campaignId", "")).strip()
+        if not campaign_id:
+            raise ValueError("campaignId is required.")
+        campaigns = await self._load_campaigns(ctx)
+        campaign = campaigns.get(campaign_id)
+        if campaign is None:
+            raise ValueError("Campaign was not found.")
+        selected, preview_state = choose_campaign_creative(campaign, await self.list_creatives(ctx))
+        if selected is None:
+            return {
+                "campaignId": campaign_id,
+                "blocked": True,
+                "reason": preview_state.blocked_reason,
+                "preview": None,
+            }
+        return {
+            "campaignId": campaign_id,
+            "blocked": False,
+            "preview": {
+                "creativeId": selected.id,
+                "advertiserId": selected.advertiser_id,
+                **render_post(selected),
+            },
+            "rotationMutationApplied": False,
+        }
+
+    async def _manage_campaign_history(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        campaign_id = str(payload.get("campaignId", "")).strip()
+        if not campaign_id:
+            raise ValueError("campaignId is required.")
+        campaigns = await self._load_campaigns(ctx)
+        if campaign_id not in campaigns:
+            raise ValueError("Campaign was not found.")
+        try:
+            limit = int(payload.get("limit", 25))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("limit must be an integer.") from exc
+        rows = history_for_campaign(
+            await ctx.storage.get(CAMPAIGN_HISTORY_KEY),
+            campaign_id=campaign_id,
+            limit=limit,
+        )
+        return {"campaignId": campaign_id, "history": rows}
 
     async def _manage_describe(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         return {
