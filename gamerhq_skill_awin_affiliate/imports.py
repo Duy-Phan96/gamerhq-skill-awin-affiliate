@@ -193,16 +193,7 @@ class AwinSavedPageCreativeSource(AwinHtmlCreativeSource):
             groups.setdefault(
                 (creative.publisher_id, creative.advertiser_id),
                 [],
-            ).append(
-                Creative(
-                    **{
-                        **creative.__dict__,
-                        "source": self.source_id,
-                    }
-                )
-                if hasattr(creative, "__dict__")
-                else creative
-            )
+            ).append(creative)
 
         complete = str(complete_advertiser_id or "").strip() or None
         if complete is not None and complete not in {advertiser for _, advertiser in groups}:
