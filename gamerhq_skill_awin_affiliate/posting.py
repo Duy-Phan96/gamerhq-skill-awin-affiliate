@@ -53,18 +53,25 @@ def select_creative(
     if normalized_mode not in _ALLOWED_MODES:
         raise ValueError("selectionMode must be specific, random or next.")
 
-    eligible = eligible_creatives(creatives, advertiser_id=advertiser_id)
-    if not eligible:
-        raise ValueError("No enabled active Awin creative is available for this selection.")
+    all_creatives = list(creatives)
 
     if normalized_mode == "specific":
         requested = str(creative_id or "").strip()
         if not requested:
             raise ValueError("creativeId is required for specific selection.")
-        selected = next((item for item in eligible if item.id == requested), None)
-        if selected is None:
+        selected = next((item for item in all_creatives if item.id == requested), None)
+        if (
+            selected is None
+            or not selected.user_enabled
+            or selected.state not in _ALLOWED_STATES
+            or (advertiser_id is not None and selected.advertiser_id != advertiser_id)
+        ):
             raise ValueError("Selected creative is unavailable, disabled or no longer active.")
         return PostSelection(selected, normalized_mode)
+
+    eligible = eligible_creatives(all_creatives, advertiser_id=advertiser_id)
+    if not eligible:
+        raise ValueError("No enabled active Awin creative is available for this selection.")
 
     if normalized_mode == "random":
         return PostSelection(secrets.choice(eligible), normalized_mode)
