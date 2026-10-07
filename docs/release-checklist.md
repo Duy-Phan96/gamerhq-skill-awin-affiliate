@@ -53,15 +53,14 @@ Use this checklist before promoting a reviewed Awin Affiliate Skill version.
 - [ ] Pinned reviewed GamerHQ Skill SDK commit is used.
 - [ ] `pip check` passes.
 
-## Host acceptance before 1.0
+## Downstream adoption checks
 
-- [ ] External Skill is pinned immutably by the GamerHQ host.
-- [ ] Setup flow is usable through the host UI.
-- [ ] Creative Library is usable through the host UI.
-- [ ] Post Now preview/confirm is usable through the host UI.
-- [ ] Campaign management/history is usable through the host UI.
-- [ ] Live Discord smoke test uses non-production/test credentials where practical.
-- [ ] Affiliate disclosure is visually visible in the final Discord post.
-- [ ] Restart/recovery is verified with persisted campaign jobs.
+These checks are useful evidence for a Host that chooses to adopt this Skill, but they are **not release blockers for this repository**:
 
-A green Skill CI is necessary but does not replace host-level acceptance.
+- external package is consumed from an immutable reviewed release/commit;
+- setup, Creative Library, Post Now and campaign Management contracts can be rendered by that Host;
+- live Discord acceptance uses non-production/test credentials where practical;
+- affiliate disclosure is visible in the final rendered post;
+- restart/recovery preserves Skill-owned campaign jobs.
+
+A green Skill CI establishes this repository's release readiness only. Each downstream Host owns its own integration, release and deployment acceptance.
