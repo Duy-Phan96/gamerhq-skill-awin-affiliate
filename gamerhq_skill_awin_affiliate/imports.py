@@ -25,7 +25,11 @@ class _AwinSnippetParser(HTMLParser):
         self._anchor_href: str | None = None
         self._anchor_rel: set[str] = set()
         self._image_src: str | None = None
-        self.rows: list[tuple[str, str, str | None]] = []
+        self._image_alt: str | None = None
+        self._image_title: str | None = None
+        self._image_width: int | None = None
+        self._image_height: int | None = None
+        self.rows: list[tuple[str, str, str | None, str | None, str | None, int | None, int | None]] = []
 
     def handle_comment(self, data: str) -> None:
         match = _ADVERTISER_COMMENT.search(data.strip())
@@ -39,17 +43,41 @@ class _AwinSnippetParser(HTMLParser):
             rel = values.get("rel") or ""
             self._anchor_rel = {part.lower() for part in str(rel).split()}
             self._image_src = None
+            self._image_alt = None
+            self._image_title = None
+            self._image_width = None
+            self._image_height = None
         elif tag.lower() == "img" and self._anchor_href:
             self._image_src = values.get("src")
+            self._image_alt = (values.get("alt") or "").strip() or None
+            self._image_title = (values.get("title") or "").strip() or None
+            try:
+                self._image_width = int(values["width"]) if values.get("width") else None
+                self._image_height = int(values["height"]) if values.get("height") else None
+            except (TypeError, ValueError):
+                self._image_width = None
+                self._image_height = None
 
     def handle_endtag(self, tag: str) -> None:
         if tag.lower() != "a":
             return
         if self._anchor_href and self._image_src:
-            self.rows.append((self._anchor_href, self._image_src, self.advertiser_name))
+            self.rows.append((
+                self._anchor_href,
+                self._image_src,
+                self.advertiser_name,
+                self._image_alt,
+                self._image_title,
+                self._image_width,
+                self._image_height,
+            ))
         self._anchor_href = None
         self._anchor_rel = set()
         self._image_src = None
+        self._image_alt = None
+        self._image_title = None
+        self._image_width = None
+        self._image_height = None
 
 
 def _validated_awin_url(value: str, *, label: str) -> str:
@@ -87,7 +115,7 @@ class AwinHtmlCreativeSource:
 
         creatives: list[Creative] = []
         seen: set[str] = set()
-        for tracking_raw, image_raw, comment_name in parser.rows:
+        for tracking_raw, image_raw, comment_name, image_alt, image_title, width, height in parser.rows:
             tracking_url = _validated_awin_url(tracking_raw, label="Tracking URL")
             image_url = _validated_awin_url(image_raw, label="Image URL")
             tracking_query = parse_qs(urlparse(tracking_url).query, keep_blank_values=False)
@@ -112,8 +140,12 @@ class AwinHtmlCreativeSource:
                     creative_group_id=creative_group_id,
                     advertiser_name=(advertiser_name or comment_name or "").strip() or None,
                     type="image",
+                    title=image_title or image_alt,
+                    description=image_alt if image_title and image_alt != image_title else None,
                     image_url=image_url,
                     tracking_url=tracking_url,
+                    width=width,
+                    height=height,
                     source=self.source_id,
                     state=CreativeState.ACTIVE,
                     metadata={"queryKeys": sorted(tracking_query.keys())},
@@ -137,3 +169,64 @@ class AwinHtmlCreativeSource:
             advertiser_id=next(iter(advertiser_ids)),
             creatives=tuple(creatives),
         )
+
+
+class AwinSavedPageCreativeSource(AwinHtmlCreativeSource):
+    """Parse a saved/exported My Creative HTML page without automating Awin login.
+
+    A saved page may include multiple advertisers, so it returns one snapshot per
+    publisher + advertiser scope. Every scope is UPSERT_ONLY unless the caller
+    explicitly marks exactly one advertiser as a complete snapshot.
+    """
+
+    source_id = "saved_my_creative_html"
+
+    def snapshots(
+        self,
+        html: str,
+        *,
+        complete_advertiser_id: str | None = None,
+    ) -> tuple[CreativeSnapshot, ...]:
+        creatives = self.parse(html)
+        groups: dict[tuple[str, str], list[Creative]] = {}
+        for creative in creatives:
+            groups.setdefault(
+                (creative.publisher_id, creative.advertiser_id),
+                [],
+            ).append(
+                Creative(
+                    **{
+                        **creative.__dict__,
+                        "source": self.source_id,
+                    }
+                )
+                if hasattr(creative, "__dict__")
+                else creative
+            )
+
+        complete = str(complete_advertiser_id or "").strip() or None
+        if complete is not None and complete not in {advertiser for _, advertiser in groups}:
+            raise CreativeImportError(
+                "completeAdvertiserId was not found in the supplied Awin HTML."
+            )
+
+        snapshots: list[CreativeSnapshot] = []
+        for (publisher_id, advertiser_id), items in sorted(groups.items()):
+            normalized_items = tuple(
+                Creative.from_dict({**item.to_dict(), "source": self.source_id})
+                for item in items
+            )
+            snapshots.append(
+                CreativeSnapshot(
+                    source_id=self.source_id,
+                    authority=(
+                        CreativeSourceAuthority.AUTHORITATIVE
+                        if advertiser_id == complete
+                        else CreativeSourceAuthority.UPSERT_ONLY
+                    ),
+                    publisher_id=publisher_id,
+                    advertiser_id=advertiser_id,
+                    creatives=normalized_items,
+                )
+            )
+        return tuple(snapshots)
