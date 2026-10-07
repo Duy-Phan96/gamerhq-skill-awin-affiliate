@@ -51,11 +51,16 @@ Status: host-neutral management contracts implemented in 0.4.0.
 
 ## Slice 5 — Post now
 
+Status: implemented as preview-confirmed management contracts in 0.5.0.
+
+- specific, random and next Creative selection
+- advertiser-scoped random/next selection
+- text-channel validation
 - Discord-native image embed
-- tracking URL button or SDK-supported equivalent
-- advertiser context
-- default visible affiliate disclosure
-- preview before publish
+- safe HTTPS View offer link button
+- visible affiliate disclosure and supporting text
+- preview returns the exact Creative ID used by confirmation
+- successful sends persist last Creative per advertiser for next rotation
 
 ## Slice 6 — Standalone campaigns
 
