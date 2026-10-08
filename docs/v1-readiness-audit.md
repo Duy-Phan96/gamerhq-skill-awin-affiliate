@@ -106,3 +106,23 @@ No complete documented My Creative banner-library API surface was established fo
 Therefore no additional authenticated Creative source is required for 1.0. The safe saved-page/manual HTML source boundary remains the intended V1 behavior.
 
 The remaining 1.0 blocker is executing the repository-local live acceptance runbook with a real test/non-production Awin account where practical.
+
+
+## Automated end-to-end acceptance coverage
+
+A complete offline V1 management-flow test now exercises:
+
+- token connection with fake Awin HTTP;
+- single-publisher auto-selection;
+- joined advertiser discovery;
+- saved My Creative HTML import;
+- Creative Library listing;
+- preview-confirmed Post Now;
+- persisted next-selection state;
+- campaign create/preview/run/history;
+- Skill reinstantiation against retained host-provided storage/secrets/scheduler state;
+- diagnostics aggregation and credential redaction.
+
+This closes the final large automated integration gap inside this repository.
+
+It does **not** replace live provider acceptance because fake Awin/Discord ports cannot prove real account permissions, provider payload drift, real Discord rendering or deployment-host behavior.
