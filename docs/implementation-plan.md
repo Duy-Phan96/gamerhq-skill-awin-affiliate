@@ -108,7 +108,6 @@ Status: implemented in 0.9.1.
 - current eligibility determines derived campaign active/blocked status
 - stale persisted blocked reasons are not exposed after Creative recovery
 - campaign list returns the same derived status/count model as campaign detail
-- health uses the same current blocked-state semantics
 - focused regression tests cover malformed booleans and stale/recovered campaign state
 
 Remaining Skill-owned pre-1.0 validation is live provider acceptance and the final public-contract/storage review.
