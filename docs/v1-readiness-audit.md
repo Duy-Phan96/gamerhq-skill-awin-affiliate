@@ -126,3 +126,12 @@ A complete offline V1 management-flow test now exercises:
 This closes the final large automated integration gap inside this repository.
 
 It does **not** replace live provider acceptance because fake Awin/Discord ports cannot prove real account permissions, provider payload drift, real Discord rendering or deployment-host behavior.
+
+
+## Acceptance-flow finding resolved in 0.9.2
+
+The new offline end-to-end acceptance test found a response-shape defect in the saved My Creative import contract: the aggregate `groups` count was accidentally overwritten by the list of per-group results.
+
+0.9.2 preserves `groups` as the numeric count and exposes detailed rows under `groupResults`.
+
+This was fixed before 1.0 so downstream consumers can rely on one unambiguous response shape.
