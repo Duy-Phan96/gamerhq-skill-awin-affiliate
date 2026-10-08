@@ -428,7 +428,7 @@ class AwinAffiliateSkill:
             "import": {
                 **totals,
                 "authoritativeAdvertiserId": complete_advertiser_id,
-                "groups": results,
+                "groupResults": results,
             }
         }
 
