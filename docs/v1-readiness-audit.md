@@ -50,9 +50,9 @@ Campaign detail already exposed derived counts/status while campaign list return
 
 0.9.1 returns derived current status/count data from both list and detail contracts.
 
-### Health consistency
+### Health semantics
 
-Blocked campaign health counts now use the same current eligibility rule as Management APIs.
+Health continues to report the persisted operational blocked reason from the last campaign execution. Management list/detail views are the current-state surface and derive eligibility live. This preserves the existing health contract while fixing stale management rendering.
 
 ## Stable public identities
 
