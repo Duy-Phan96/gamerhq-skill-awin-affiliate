@@ -93,3 +93,16 @@ The hardening changes fail closed on malformed state and do not expose raw excep
 Downstream Host rendering, package pinning and production deployment are not blockers owned by this repository.
 
 If a missing public Runtime/SDK/Host capability is discovered during live acceptance, create a handoff rather than changing that repository from this project.
+
+
+## Provider-surface revalidation
+
+Rechecked on 2026-10-08.
+
+Official Awin publisher documentation still presents My Creative as the platform workflow for browsing/copying banners and describes Publisher API capabilities around account/programme/reporting/transaction automation.
+
+No complete documented My Creative banner-library API surface was established for this release.
+
+Therefore no additional authenticated Creative source is required for 1.0. The safe saved-page/manual HTML source boundary remains the intended V1 behavior.
+
+The remaining 1.0 blocker is executing the repository-local live acceptance runbook with a real test/non-production Awin account where practical.
