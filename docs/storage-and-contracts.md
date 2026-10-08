@@ -103,3 +103,15 @@ The Skill consumes no private implementation from another Skill.
 In particular, recurring Awin campaigns do not depend on the Recurring Posts Skill.
 
 Future cross-Skill communication, if added, must use documented Events or Public Skill APIs.
+
+
+## Saved My Creative import result shape
+
+`awin-affiliate.creatives.import-saved-html.v1` returns:
+
+- `groups` — numeric number of publisher/advertiser groups processed;
+- `found`, `new`, `updated`, `missing`, `restored`, `unchanged` — aggregate synchronization counts;
+- `authoritativeAdvertiserId` — the explicitly confirmed authoritative advertiser ID, or null;
+- `groupResults` — detailed per-group synchronization result objects.
+
+`groups` is intentionally a count and must not be overloaded with detailed result rows.
