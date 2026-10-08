@@ -6,15 +6,20 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 
 ## [Unreleased]
 
-### Changed
-
-- Adopted autonomous repository ownership and handoff-based cross-project coordination.
-- Clarified that GamerHQ Host rendering and deployment are downstream concerns, not release blockers owned by this Skill repository.
-
 ### Remaining Skill-owned work before 1.0
 
 - Final package/API review and live provider validation with a dedicated test Awin account or non-production credentials where practical.
 - Decide whether an authenticated Creative source is necessary if Awin exposes a supported/testable complete Creative Library surface.
+
+## [0.9.1]
+
+- Adopted autonomous repository ownership and handoff-based cross-project coordination.
+- Clarified that downstream Host rendering/deployment is not a release blocker owned by this repository.
+- Rejects non-boolean campaign create values such as the string `"false"` instead of coercing them to `True`.
+- Rejects corrupted persisted Creative/Campaign boolean fields instead of silently coercing them.
+- Campaign list/detail status is derived from current Creative eligibility so recovered Creatives no longer leave stale blocked state in management views.
+- Health blocked-campaign counts now use the same current eligibility semantics.
+- Added focused 1.0-readiness regression coverage for these cases.
 
 ## [0.9.0]
 
