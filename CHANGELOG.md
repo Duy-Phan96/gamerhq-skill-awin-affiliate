@@ -11,8 +11,10 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 - Execute the documented live acceptance runbook with a dedicated test Awin account or non-production credentials where practical.
 - Complete the final 1.0 compatibility baseline review after that acceptance passes.
 
-### Changed
+## [0.9.2]
 
+- Added a complete offline V1 management-flow acceptance test covering setup, advertiser discovery, Creative import, Post Now, campaigns, Skill reinstantiation and diagnostics through fake public Runtime ports.
+- Fixed saved My Creative import results so `groups` remains the numeric group count and detailed per-group synchronization results are exposed separately as `groupResults`.
 - Revalidated the current official Awin provider surface and retained saved/manual My Creative HTML as the safe V1 Creative-library path instead of introducing undocumented authenticated scraping.
 - Added a repository-local live acceptance runbook for the final pre-1.0 provider validation.
 
