@@ -97,3 +97,17 @@ Status: diagnostics/hardening foundation implemented in 0.8.0.
 - any missing Host/Runtime capability must be requested through a handoff
 
 Awin Affiliate must continue to operate when Recurring Posts is not installed.
+
+
+## 1.0 readiness hardening
+
+Status: implemented in 0.9.1.
+
+- strict boolean validation for campaign create payloads
+- strict boolean validation when loading persisted Campaign and Creative state
+- current eligibility determines derived campaign active/blocked status
+- stale persisted blocked reasons are not exposed after Creative recovery
+- campaign list returns the same derived status/count model as campaign detail
+- focused regression tests cover malformed booleans and stale/recovered campaign state
+
+Remaining Skill-owned pre-1.0 validation is live provider acceptance and the final public-contract/storage review.

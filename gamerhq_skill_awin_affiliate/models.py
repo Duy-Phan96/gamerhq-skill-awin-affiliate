@@ -80,6 +80,9 @@ class Creative:
             tags_raw = value.get("tags", ())
             if not isinstance(tags_raw, (list, tuple)):
                 raise TypeError
+            user_enabled = value.get("userEnabled", True)
+            if not isinstance(user_enabled, bool):
+                raise TypeError
             return cls(
                 id=str(value["id"]),
                 provider=str(value["provider"]),
@@ -99,7 +102,7 @@ class Creative:
                 tags=tuple(str(item) for item in tags_raw),
                 source=str(value.get("source", "manual_html")),
                 state=state,
-                user_enabled=bool(value.get("userEnabled", True)),
+                user_enabled=user_enabled,
                 first_seen_at=_optional_int(value.get("firstSeenAt")),
                 last_seen_at=_optional_int(value.get("lastSeenAt")),
                 last_synced_at=_optional_int(value.get("lastSyncedAt")),

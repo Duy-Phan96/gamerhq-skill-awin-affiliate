@@ -56,6 +56,10 @@ class Campaign:
             shuffle = value.get("shuffleRemaining", ())
             if not isinstance(selected, (list, tuple)) or not isinstance(shuffle, (list, tuple)):
                 raise TypeError
+            enabled = value.get("enabled", True)
+            avoid_immediate_repeat = value.get("avoidImmediateRepeat", True)
+            if not isinstance(enabled, bool) or not isinstance(avoid_immediate_repeat, bool):
+                raise TypeError
             campaign = cls(
                 id=str(value["id"]),
                 name=str(value["name"]),
@@ -64,8 +68,8 @@ class Campaign:
                 selected_creative_ids=tuple(str(item) for item in selected),
                 rotation=str(value["rotation"]),
                 interval_seconds=int(value["intervalSeconds"]),
-                enabled=bool(value.get("enabled", True)),
-                avoid_immediate_repeat=bool(value.get("avoidImmediateRepeat", True)),
+                enabled=enabled,
+                avoid_immediate_repeat=avoid_immediate_repeat,
                 last_creative_id=str(value["lastCreativeId"]) if value.get("lastCreativeId") else None,
                 sequential_index=int(value.get("sequentialIndex", 0)),
                 shuffle_remaining=tuple(str(item) for item in shuffle),
@@ -163,15 +167,21 @@ def choose_campaign_creative(
 
 def campaign_status(campaign: Campaign, creatives: Iterable[Creative]) -> dict[str, Any]:
     eligible = eligible_for_campaign(campaign, creatives)
+    blocked = campaign.enabled and not eligible
     return {
         **campaign.to_dict(),
+        "blockedReason": (
+            campaign.blocked_reason or "No enabled active Creative is available."
+            if blocked
+            else None
+        ),
         "eligibleCreativeCount": len(eligible),
         "configuredCreativeCount": len(campaign.selected_creative_ids),
         "status": (
             "paused"
             if not campaign.enabled
             else "blocked"
-            if campaign.blocked_reason
+            if blocked
             else "active"
         ),
     }
