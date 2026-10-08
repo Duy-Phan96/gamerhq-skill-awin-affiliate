@@ -6,6 +6,10 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 
 ## [Unreleased]
 
+### Added
+
+- Added a complete offline V1 management-flow acceptance test covering Awin setup, advertiser discovery, Creative import, Post Now, campaigns, Skill reinstantiation and diagnostics through fake public Runtime ports.
+
 ### Remaining Skill-owned work before 1.0
 
 - Execute the documented live acceptance runbook with a dedicated test Awin account or non-production credentials where practical.
