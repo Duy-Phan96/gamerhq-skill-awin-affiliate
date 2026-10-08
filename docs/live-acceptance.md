@@ -206,3 +206,14 @@ After this runbook passes and the final compatibility baseline is reviewed:
 - promote the package to 1.0.0 in this repository only.
 
 A 1.0.0 Skill release does not imply or authorize a GamerHQ production deployment.
+
+
+## Automated prerequisite
+
+Before executing this live runbook, the repository's offline end-to-end acceptance test must pass:
+
+```text
+tests/test_v1_offline_acceptance_flow.py
+```
+
+That test validates the complete Skill-owned workflow using fake public ports. Live acceptance remains necessary for real Awin provider behavior and real downstream host/Discord integration.
