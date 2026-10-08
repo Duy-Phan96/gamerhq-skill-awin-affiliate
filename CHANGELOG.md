@@ -18,7 +18,6 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 - Rejects non-boolean campaign create values such as the string `"false"` instead of coercing them to `True`.
 - Rejects corrupted persisted Creative/Campaign boolean fields instead of silently coercing them.
 - Campaign list/detail status is derived from current Creative eligibility so recovered Creatives no longer leave stale blocked state in management views.
-- Health blocked-campaign counts now use the same current eligibility semantics.
 - Added focused 1.0-readiness regression coverage for these cases.
 
 ## [0.9.0]
