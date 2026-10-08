@@ -8,8 +8,13 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 
 ### Remaining Skill-owned work before 1.0
 
-- Final package/API review and live provider validation with a dedicated test Awin account or non-production credentials where practical.
-- Decide whether an authenticated Creative source is necessary if Awin exposes a supported/testable complete Creative Library surface.
+- Execute the documented live acceptance runbook with a dedicated test Awin account or non-production credentials where practical.
+- Complete the final 1.0 compatibility baseline review after that acceptance passes.
+
+### Changed
+
+- Revalidated the current official Awin provider surface and retained saved/manual My Creative HTML as the safe V1 Creative-library path instead of introducing undocumented authenticated scraping.
+- Added a repository-local live acceptance runbook for the final pre-1.0 provider validation.
 
 ## [0.9.1]
 
