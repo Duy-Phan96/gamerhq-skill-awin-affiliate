@@ -133,5 +133,7 @@ def test_management_import_marks_missing_only_for_confirmed_complete_advertiser(
         assert stored["awin:20:11:200"].state == CreativeState.ACTIVE
         assert result["import"]["missing"] == 1
         assert result["import"]["authoritativeAdvertiserId"] == "10"
+        assert result["import"]["groups"] == 2
+        assert len(result["import"]["groupResults"]) == 2
 
     asyncio.run(run())
