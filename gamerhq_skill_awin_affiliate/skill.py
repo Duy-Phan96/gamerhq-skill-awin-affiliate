@@ -186,7 +186,11 @@ class AwinAffiliateSkill:
         creatives = await self.list_creatives(ctx)
         setup = await AwinSetupService(ctx).status()
         campaigns = await self._load_campaigns(ctx)
-        blocked = sum(1 for campaign in campaigns.values() if campaign.enabled and campaign.blocked_reason)
+        blocked = sum(
+            1
+            for campaign in campaigns.values()
+            if campaign_status(campaign, creatives)["status"] == "blocked"
+        )
         if not setup["connected"]:
             return SkillHealth(
                 "PASS",
@@ -693,7 +697,13 @@ class AwinAffiliateSkill:
 
     async def _manage_campaign_list(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         campaigns = await self._load_campaigns(ctx)
-        return {"campaigns": [item.to_dict() for item in sorted(campaigns.values(), key=lambda item: item.name.lower())]}
+        creatives = await self.list_creatives(ctx)
+        return {
+            "campaigns": [
+                campaign_status(item, creatives)
+                for item in sorted(campaigns.values(), key=lambda item: item.name.lower())
+            ]
+        }
 
     async def _manage_campaign_create(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         try:
@@ -709,6 +719,10 @@ class AwinAffiliateSkill:
             selected_ids = tuple(str(item).strip() for item in selected if str(item).strip())
         else:
             selected_ids = ()
+        enabled = payload.get("enabled", True)
+        avoid_immediate_repeat = payload.get("avoidImmediateRepeat", True)
+        if not isinstance(enabled, bool) or not isinstance(avoid_immediate_repeat, bool):
+            raise ValueError("enabled and avoidImmediateRepeat must be booleans.")
         campaign = Campaign(
             id=uuid.uuid4().hex,
             name=str(payload.get("name", "")).strip(),
@@ -717,8 +731,8 @@ class AwinAffiliateSkill:
             selected_creative_ids=selected_ids,
             rotation=str(payload.get("rotation", "shuffle")).strip().lower(),
             interval_seconds=interval_seconds,
-            enabled=bool(payload.get("enabled", True)),
-            avoid_immediate_repeat=bool(payload.get("avoidImmediateRepeat", True)),
+            enabled=enabled,
+            avoid_immediate_repeat=avoid_immediate_repeat,
         )
         validate_campaign(campaign)
         known = {item.id: item for item in await self.list_creatives(ctx)}
@@ -736,7 +750,7 @@ class AwinAffiliateSkill:
             await self._save_campaigns(ctx, campaigns)
         await self._schedule_campaign(ctx, campaign)
         await ctx.audit.write(action="awin.campaign-created", target=campaign.id)
-        return {"campaign": campaign.to_dict()}
+        return {"campaign": campaign_status(campaign, await self.list_creatives(ctx))}
 
     async def _manage_campaign_set_active(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         campaign_id = str(payload.get("campaignId", "")).strip()
@@ -752,7 +766,7 @@ class AwinAffiliateSkill:
             campaigns[campaign_id] = campaign
             await self._save_campaigns(ctx, campaigns)
         await self._schedule_campaign(ctx, campaign)
-        return {"campaign": campaign.to_dict()}
+        return {"campaign": campaign_status(campaign, await self.list_creatives(ctx))}
 
     async def _manage_campaign_delete(self, ctx, payload: Mapping[str, Any]) -> Mapping[str, Any]:
         campaign_id = str(payload.get("campaignId", "")).strip()
