@@ -186,11 +186,7 @@ class AwinAffiliateSkill:
         creatives = await self.list_creatives(ctx)
         setup = await AwinSetupService(ctx).status()
         campaigns = await self._load_campaigns(ctx)
-        blocked = sum(
-            1
-            for campaign in campaigns.values()
-            if campaign_status(campaign, creatives)["status"] == "blocked"
-        )
+        blocked = sum(1 for campaign in campaigns.values() if campaign.enabled and campaign.blocked_reason)
         if not setup["connected"]:
             return SkillHealth(
                 "PASS",
