@@ -119,6 +119,7 @@ The importer can discover multiple advertisers from Awin tracking links in one p
 - [Storage & public contracts](docs/storage-and-contracts.md)
 - [Implementation plan](docs/implementation-plan.md)
 - [1.0 readiness audit](docs/v1-readiness-audit.md)
+- [Live acceptance before 1.0](docs/live-acceptance.md)
 - [Release checklist](docs/release-checklist.md)
 - [Security](SECURITY.md)
 - [Changelog](CHANGELOG.md)

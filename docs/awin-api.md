@@ -73,3 +73,21 @@ The Skill therefore supports an offline saved-page fallback:
 - optional `completeAdvertiserId` makes only that advertiser authoritative after explicit administrator confirmation.
 
 This fallback does not automate login and does not depend on undocumented private Awin endpoints.
+
+
+## 1.0 provider-surface revalidation — 2026-10-08
+
+The official Awin publisher help material was rechecked before 1.0 preparation.
+
+Current documented state:
+
+- My Creative remains the publisher platform area for banners, HTML links and other advertiser-provided media.
+- Awin's Publisher API documentation continues to describe program data, commissions, transaction details, aggregate reporting and related publisher automation.
+- This repository still does not rely on a documented Publisher API endpoint for the complete My Creative banner library.
+
+Decision for 1.0:
+
+- keep official Publisher API usage for account/programme discovery;
+- keep manual/saved My Creative HTML as the banner-library fallback;
+- do not add an authenticated browser-session scraper or guessed private endpoint;
+- reconsider only if Awin publishes a supported/safely testable Creative-library surface.
