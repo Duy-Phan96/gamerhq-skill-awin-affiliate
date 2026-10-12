@@ -60,7 +60,9 @@ The Skill never imports GamerHQ host internals and remains usable without Recurr
 
 The **0.9.3 Data Integrity & Release Hardening** milestone is complete.
 
-The current Skill-owned gate is **Live Provider Acceptance**, tracked by Issue #18. It validates real Awin account responses, Creative ingestion, Discord posting, campaign operation and restart recovery. After that acceptance passes, the next planned milestone is **1.0.0 Stable Public Contract**.
+The current Skill-owned gate is **Live Provider Acceptance**, tracked by Issue #18. It validates real Awin account responses, Creative ingestion, Discord posting, campaign operation and restart recovery. Use the repository's report template to record only redacted PASS/FAIL evidence.
+
+After live acceptance passes and the owner resolves the license/distribution decisions tracked by Issue #23, the next planned milestone is **1.0.0 Stable Public Contract**.
 
 The proposed stable request/response baseline is documented in [Management API contracts](docs/management-api-contracts.md) and automatically checked against the manifest inventory.
 
@@ -106,6 +108,8 @@ python -m pytest
 
 CI builds and installs the package wheel before running the suite on Python 3.12, 3.13 and 3.14.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the local setup, security rules, branch workflow and Definition of Done.
+
 ## Status
 
 Current package version: **0.9.3**
@@ -114,6 +118,7 @@ Current release state:
 
 ```text
 BLOCKED BY LIVE ACCEPTANCE
+AND OWNER RELEASE DECISIONS
 ```
 
 This repository owns only the Awin Skill package. A green Skill release does not imply a GamerHQ production deployment or require a synchronized Host release. Public contracts and storage keys are treated as the intended 1.0 compatibility baseline pending the final live acceptance review.
@@ -136,6 +141,9 @@ The importer can discover multiple advertisers from Awin tracking links in one p
 - [Implementation plan](docs/implementation-plan.md)
 - [1.0 readiness audit](docs/v1-readiness-audit.md)
 - [Live acceptance before 1.0](docs/live-acceptance.md)
+- [Live acceptance report template](docs/live-acceptance-report-template.md)
+- [Release process](docs/release-process.md)
 - [Release checklist](docs/release-checklist.md)
+- [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
 - [Changelog](CHANGELOG.md)
