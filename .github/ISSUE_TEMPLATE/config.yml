@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security or credential exposure
+    url: https://github.com/Duy-Phan96/gamerhq-skill-awin-affiliate/blob/main/SECURITY.md
+    about: Do not open a public Issue containing tokens, private logs, credentials, or exploitable secret material.
+  - name: Contribution and repository scope
+    url: https://github.com/Duy-Phan96/gamerhq-skill-awin-affiliate/blob/main/CONTRIBUTING.md
+    about: Review local setup, testing, compatibility, and repository ownership before proposing work.

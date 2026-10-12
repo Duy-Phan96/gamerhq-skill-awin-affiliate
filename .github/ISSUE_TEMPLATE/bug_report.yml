@@ -1,0 +1,89 @@
+name: Bug report
+description: Report a reproducible defect in the standalone Awin Affiliate Skill.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Awin Affiliate.
+
+        **Do not include Awin tokens, host encryption keys, production `.env` values, private databases, or unredacted provider/Discord payloads.** Follow `SECURITY.md` for sensitive reports.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Setup / publisher selection
+        - Advertiser discovery
+        - Creative import / synchronization
+        - Creative Library
+        - Post Now preview / send
+        - Campaigns / scheduler / history
+        - Diagnostics / health
+        - Packaging / release tooling
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Skill version or commit
+      description: Use the package version and immutable commit when known.
+      placeholder: "0.9.3 / bcf9a8ad..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest safe reproduction using redacted or synthetic values.
+      placeholder: |
+        1. Call or open ...
+        2. Select ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include only redacted errors, safe reason codes, or aggregate evidence.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      options:
+        - P0 — security, data integrity, or release-blocking failure
+        - P1 — primary workflow unavailable or incorrect
+        - P2 — important reliability or maintainability problem
+        - P3 — minor defect or polish
+        - Unsure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety and duplicate checks
+      options:
+        - label: I searched existing Issues and did not find the same report.
+          required: true
+        - label: I removed all tokens, secrets, private logs, personal data, and production values.
+          required: true
+        - label: The problem belongs to this repository rather than a downstream Host or another Skill.
+          required: true
