@@ -63,7 +63,9 @@ The **0.9.3 Data Integrity & Release Hardening** milestone is complete.
 
 The current Skill-owned gate is **Live Provider Acceptance**, tracked by Issue #18. It validates real Awin account responses, Creative ingestion, Discord posting, campaign operation and restart recovery. Use the repository's report template to record only redacted PASS/FAIL evidence.
 
-After live acceptance passes and the owner resolves the license/distribution decisions tracked by Issue #23, the next planned milestone is **1.0.0 Stable Public Contract**.
+The legal and distribution baseline is resolved: MIT, copyright held by Duy Phan, with GitHub Release only as the initial stable channel. PyPI is deferred.
+
+After live acceptance passes and Issue #33 branch protection is enabled or explicitly excepted by the owner, the next planned milestone is **1.0.0 Stable Public Contract**.
 
 The proposed stable request/response baseline is documented in [Management API contracts](docs/management-api-contracts.md) and automatically checked against the manifest inventory.
 
@@ -120,6 +122,18 @@ CI builds and installs the package wheel before running the suite on Python 3.12
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the local setup, security rules, branch workflow and Definition of Done.
 
+## License and distribution
+
+Licensed under the [MIT License](LICENSE).
+
+```text
+Copyright (c) 2026 Duy Phan
+```
+
+The approved initial stable distribution is a GitHub Release containing the reviewed wheel, source distribution and checksums. PyPI is deliberately deferred and is not part of the `1.0.0` release.
+
+See [Legal identity and initial distribution](docs/legal-and-distribution.md).
+
 ## Status
 
 Current package version: **0.9.3**
@@ -128,7 +142,7 @@ Current release state:
 
 ```text
 BLOCKED BY LIVE ACCEPTANCE
-AND OWNER RELEASE DECISIONS
+AND MAIN BRANCH PROTECTION
 ```
 
 This repository owns only the Awin Skill package. A green Skill release does not imply a GamerHQ production deployment or require a synchronized Host release. Public contracts and storage keys are treated as the intended 1.0 compatibility baseline pending the final live acceptance review.
@@ -137,7 +151,7 @@ This repository owns only the Awin Skill package. A green Skill release does not
 
 When the complete banner library is unavailable through a documented Publisher API, an administrator can save/export the rendered My Creative HTML and import it through the Skill.
 
-The importer can discover multiple advertisers from Awin tracking links in one page. Imports are **UPSERT_ONLY by default**. Missing detection is enabled only when the administrator explicitly supplies one `completeAdvertiserId`, confirming that the saved HTML represents the complete Creative set for that advertiser. Other advertisers in the same page remain UPSERT_ONLY.
+The importer can discover multiple advertisers from one saved page. Imports are **UPSERT_ONLY by default**. Missing detection is enabled only when the administrator explicitly supplies one `completeAdvertiserId`, confirming that the saved HTML represents the complete Creative set for that advertiser. Other advertisers in the same page remain UPSERT_ONLY.
 
 ## Documentation
 
@@ -152,6 +166,7 @@ The importer can discover multiple advertisers from Awin tracking links in one p
 - [1.0 readiness audit](docs/v1-readiness-audit.md)
 - [Live acceptance before 1.0](docs/live-acceptance.md)
 - [Live acceptance report template](docs/live-acceptance-report-template.md)
+- [Legal identity and initial distribution](docs/legal-and-distribution.md)
 - [Release process](docs/release-process.md)
 - [Release artifact dry run](docs/release-artifact-dry-run.md)
 - [Release checklist](docs/release-checklist.md)
