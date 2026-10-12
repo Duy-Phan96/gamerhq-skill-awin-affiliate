@@ -45,6 +45,10 @@ _BaseAwinAffiliateSkill.manifest = _replace(
     _BaseAwinAffiliateSkill.manifest,
     version=__version__,
 )
+_HardenedAwinAffiliateSkill.manifest = _replace(
+    _HardenedAwinAffiliateSkill.manifest,
+    version=__version__,
+)
 
 
 class AwinAffiliateSkill(_HardenedAwinAffiliateSkill):
