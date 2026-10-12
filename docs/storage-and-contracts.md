@@ -1,5 +1,7 @@
 # Storage and public contracts
 
+This document inventories stable identities. Detailed Management API request/response schemas are documented in [Management API contracts](management-api-contracts.md).
+
 ## Stable storage keys
 
 ### `settings.v1`
@@ -96,6 +98,8 @@ The Skill does not run a private scheduler loop.
 - `awin-affiliate.diagnostics.v1`
 - `awin-affiliate.describe.v1`
 
+The test suite verifies that the detailed contract document contains every manifest-declared Management API exactly once.
+
 ## Cross-Skill boundary
 
 The Skill consumes no private implementation from another Skill.
@@ -103,7 +107,6 @@ The Skill consumes no private implementation from another Skill.
 In particular, recurring Awin campaigns do not depend on the Recurring Posts Skill.
 
 Future cross-Skill communication, if added, must use documented Events or Public Skill APIs.
-
 
 ## Saved My Creative import result shape
 

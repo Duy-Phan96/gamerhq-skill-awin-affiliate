@@ -62,6 +62,8 @@ The **0.9.3 Data Integrity & Release Hardening** milestone is complete.
 
 The current Skill-owned gate is **Live Provider Acceptance**, tracked by Issue #18. It validates real Awin account responses, Creative ingestion, Discord posting, campaign operation and restart recovery. After that acceptance passes, the next planned milestone is **1.0.0 Stable Public Contract**.
 
+The proposed stable request/response baseline is documented in [Management API contracts](docs/management-api-contracts.md) and automatically checked against the manifest inventory.
+
 Future provider capabilities remain optional and must belong to this Skill, use stable public contracts and be backed by a supported or safely testable Awin surface.
 
 Downstream host rendering is not implemented from this repository. A GamerHQ-compatible host may independently consume the public Management contracts exposed by this Skill. Any missing Host/Runtime capability is handled through a handoff rather than cross-repository modification.
@@ -130,6 +132,7 @@ The importer can discover multiple advertisers from Awin tracking links in one p
 - [Awin API integration](docs/awin-api.md)
 - [Affiliate disclosure & compliance](docs/compliance.md)
 - [Storage & public contracts](docs/storage-and-contracts.md)
+- [Management API contracts](docs/management-api-contracts.md)
 - [Implementation plan](docs/implementation-plan.md)
 - [1.0 readiness audit](docs/v1-readiness-audit.md)
 - [Live acceptance before 1.0](docs/live-acceptance.md)

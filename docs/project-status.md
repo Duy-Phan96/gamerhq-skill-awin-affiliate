@@ -69,7 +69,8 @@ Implemented and covered by repository tests:
 - same-campaign serialization across Run Now, scheduled execution, pause, edit and delete;
 - HTTPS-only imported and rendered Creative URLs;
 - Discord-safe imported fallback-title bounds;
-- built-wheel verification on Python 3.12, 3.13 and 3.14.
+- built-wheel verification on Python 3.12, 3.13 and 3.14;
+- complete host-neutral request/response documentation for every manifest-declared Management API.
 
 ## Architecture decisions already made
 
@@ -83,6 +84,7 @@ Implemented and covered by repository tests:
 - Manual/saved-page imports are UPSERT_ONLY unless one advertiser is explicitly confirmed complete.
 - No authenticated browser-session scraper or guessed private Awin endpoint is part of V1.
 - Cross-repository requirements are handled by handoff, not by modifying another repository.
+- The current `setup.status.v1` candidate retains a masked `token` compatibility marker; hosts must use `connected` and must not display or persist that marker.
 
 ## Stable identities under review for 1.0
 
@@ -102,7 +104,9 @@ Scheduler handler:
 
 - `awin-affiliate.campaign.execute.v1`
 
-Public Management API IDs are documented in `docs/storage-and-contracts.md`.
+Public Management API IDs are inventoried in `docs/storage-and-contracts.md`.
+
+The complete request/response compatibility candidate is documented in `docs/management-api-contracts.md`. A regression test verifies that every manifest-declared Management API appears exactly once in that document.
 
 ## Resolved highest-risk finding
 
@@ -117,7 +121,7 @@ The project audit found that campaign configuration and delivery history were sh
 - scheduler-failure compensation;
 - deterministic concurrency regression tests.
 
-Tracked by Issue #19.
+Tracked by completed Issue #19.
 
 ## Completed milestone
 
@@ -164,7 +168,8 @@ Required evidence:
 - preview-confirmed Post Now;
 - campaign create, Preview Next, Run Now, pause/resume and history;
 - restart recovery without duplicated jobs;
-- diagnostics free of credential material.
+- diagnostics free of credential material;
+- confirmation that real provider responses fit the documented compatibility candidate or require only an explicit additive adjustment.
 
 ## Planned stable release
 
@@ -175,7 +180,7 @@ Status: Planned
 Entry criteria:
 
 - live acceptance complete;
-- public Management API IDs accepted as the stable V1 baseline;
+- the documented Management API compatibility candidate accepted as the stable V1 baseline;
 - storage, secret and scheduler identities accepted as the stable V1 baseline;
 - release checklist complete;
 - final package build and CI green.
@@ -193,15 +198,14 @@ Expected release outputs:
 ### P1
 
 1. Execute Issue #18 live acceptance.
-2. Freeze and document the final 1.0 request/response compatibility baseline.
+2. Confirm or explicitly amend the documented 1.0 Management API baseline using live evidence.
 3. Confirm the intended legal/license identity and distribution channel.
 4. Prepare the 1.0.0 release PR, tag, notes and artifacts after acceptance passes.
 
 ### P2
 
-5. Expand request/response examples for all public Management contracts.
-6. Add a lean contributor guide after the stable release baseline is accepted.
-7. Refactor the large Management orchestrator only after the 1.0 compatibility baseline is stable.
+5. Add a lean contributor guide after the stable release baseline is accepted.
+6. Refactor the large Management orchestrator only after the 1.0 compatibility baseline is stable.
 
 ### Explicitly postponed
 
@@ -215,7 +219,6 @@ Expected release outputs:
 ## Decisions still required
 
 - confirm the final legal/license identity before publishing 1.0 artifacts;
-- decide whether `setup.status.v1` should retain the masked `token` field as part of the stable contract;
 - choose the final distribution channel: GitHub Release only, or GitHub Release plus PyPI;
 - after live acceptance, confirm whether any real Awin payload requires an additive compatibility adjustment.
 
