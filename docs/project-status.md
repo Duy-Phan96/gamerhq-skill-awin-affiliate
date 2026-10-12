@@ -14,6 +14,7 @@ Current release state:
 
 ```text
 BLOCKED BY LIVE ACCEPTANCE
+AND OWNER RELEASE DECISIONS
 ```
 
 The primary V1 workflow is implemented:
@@ -70,7 +71,8 @@ Implemented and covered by repository tests:
 - HTTPS-only imported and rendered Creative URLs;
 - Discord-safe imported fallback-title bounds;
 - built-wheel verification on Python 3.12, 3.13 and 3.14;
-- complete host-neutral request/response documentation for every manifest-declared Management API.
+- complete host-neutral request/response documentation for every manifest-declared Management API;
+- lean contributor, live-acceptance evidence and independent release workflows.
 
 ## Architecture decisions already made
 
@@ -85,6 +87,7 @@ Implemented and covered by repository tests:
 - No authenticated browser-session scraper or guessed private Awin endpoint is part of V1.
 - Cross-repository requirements are handled by handoff, not by modifying another repository.
 - The current `setup.status.v1` candidate retains a masked `token` compatibility marker; hosts must use `connected` and must not display or persist that marker.
+- A Skill release is independent and never authorizes a downstream Host deployment.
 
 ## Stable identities under review for 1.0
 
@@ -157,7 +160,15 @@ Status: Ready to execute; requires a real test/non-production Awin account and a
 
 Tracker: Issue #18
 
-Objective: validate the reviewed Skill against real provider and Discord behavior.
+Runbook:
+
+- `docs/live-acceptance.md`
+
+Evidence template:
+
+- `docs/live-acceptance-report-template.md`
+
+Objective: validate the reviewed Skill against real provider and Discord behavior while preserving a redacted, reproducible acceptance record.
 
 Required evidence:
 
@@ -167,9 +178,27 @@ Required evidence:
 - Creative preview and enable/disable;
 - preview-confirmed Post Now;
 - campaign create, Preview Next, Run Now, pause/resume and history;
-- restart recovery without duplicated jobs;
+- restart recovery without duplicated jobs or sends;
 - diagnostics free of credential material;
 - confirmation that real provider responses fit the documented compatibility candidate or require only an explicit additive adjustment.
+
+## Parallel owner decision
+
+### Decision — License identity and distribution channel
+
+Status: Open
+
+Tracker: Issue #23
+
+Required before publication of stable 1.0 artifacts:
+
+- confirm the intended license;
+- confirm the copyright holder/legal identity;
+- approve the repository `LICENSE` wording;
+- choose GitHub Release only or GitHub Release plus PyPI;
+- confirm PyPI ownership/security when PyPI is selected.
+
+No legal identity is inferred automatically from repository metadata.
 
 ## Planned stable release
 
@@ -179,33 +208,46 @@ Status: Planned
 
 Entry criteria:
 
-- live acceptance complete;
-- the documented Management API compatibility candidate accepted as the stable V1 baseline;
-- storage, secret and scheduler identities accepted as the stable V1 baseline;
-- release checklist complete;
-- final package build and CI green.
+- live acceptance report is `PASS`;
+- the documented Management API compatibility candidate is accepted as the stable V1 baseline;
+- storage, secret and scheduler identities are accepted as the stable V1 baseline;
+- Issue #23 is resolved;
+- release checklist is complete;
+- final package build and CI are green.
 
 Expected release outputs:
 
 - package/manifest version `1.0.0`;
 - final changelog entry;
+- approved `LICENSE` file;
 - immutable Git tag;
 - GitHub Release;
-- installable release artifacts.
+- installable wheel and source distribution;
+- release notes with explicit downstream deployment boundary.
+
+Release procedure:
+
+- `docs/release-process.md`
 
 ## Prioritized backlog
 
 ### P1
 
-1. Execute Issue #18 live acceptance.
+1. Execute Issue #18 live acceptance and complete the report template.
 2. Confirm or explicitly amend the documented 1.0 Management API baseline using live evidence.
-3. Confirm the intended legal/license identity and distribution channel.
-4. Prepare the 1.0.0 release PR, tag, notes and artifacts after acceptance passes.
+3. Resolve Issue #23 for license identity and distribution channel.
+4. Prepare the 1.0.0 release PR, tag, notes and artifacts after both gates pass.
 
 ### P2
 
-5. Add a lean contributor guide after the stable release baseline is accepted.
-6. Refactor the large Management orchestrator only after the 1.0 compatibility baseline is stable.
+5. Refactor the large Management orchestrator only after the 1.0 compatibility baseline is stable.
+6. Add further provider capabilities only after real adoption evidence and a supported Awin surface exist.
+
+### Completed repository-governance work
+
+- `CONTRIBUTING.md` defines local setup, security, PR workflow and Definition of Done.
+- `docs/release-process.md` defines independent versioning, artifact, tag, release and rollback behavior.
+- `docs/live-acceptance-report-template.md` defines safe, redacted evidence capture.
 
 ### Explicitly postponed
 
