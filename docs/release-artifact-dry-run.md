@@ -8,6 +8,16 @@ Workflow:
 .github/workflows/release-artifact-dry-run.yml
 ```
 
+## Triggers and evidence scope
+
+The workflow runs:
+
+- on pull requests, validating the proposed merged tree before review/merge;
+- on every push to `main`, validating the exact post-merge commit;
+- through manual `workflow_dispatch` when an explicit rerun is needed.
+
+Release-readiness claims must use the successful `main`-push run for the exact reviewed commit. A pull-request run proves the proposed tree but is not a substitute for post-merge commit evidence.
+
 ## What it does
 
 The workflow:
@@ -82,4 +92,5 @@ The final `1.0.0` release workflow may reuse these proven steps only after:
 - the redacted acceptance report is approved;
 - Issue #23 resolves license identity and distribution;
 - the stable release preflight passes;
-- the dedicated release PR and post-merge CI are green.
+- the dedicated release PR and post-merge CI are green;
+- the exact final `main` commit has a successful artifact dry-run result.
