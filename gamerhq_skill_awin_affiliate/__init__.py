@@ -1,6 +1,9 @@
+from dataclasses import replace as _replace
+
+from ._version import __version__
 from .awin_api import AwinAccount, AwinApiError, AwinClient, AwinProgramme
 from .creative_sources import CreativeSnapshot, CreativeSource, CreativeSourceAuthority
-from .hardened_skill import AwinAffiliateSkill
+from .hardened_skill import AwinAffiliateSkill as _HardenedAwinAffiliateSkill
 from .imports import AwinHtmlCreativeSource, AwinSavedPageCreativeSource, CreativeImportError
 from .models import Creative, CreativeState
 from .sync import CreativeSyncResult, apply_creative_snapshot
@@ -33,7 +36,23 @@ from .skill import (
     LIST_CREATIVES_API,
     SKILL_ID,
     STORAGE_KEY,
+    AwinAffiliateSkill as _BaseAwinAffiliateSkill,
 )
+
+# Keep every runtime-visible manifest aligned with the single package version
+# constant. The release preflight additionally verifies pyproject.toml.
+_BaseAwinAffiliateSkill.manifest = _replace(
+    _BaseAwinAffiliateSkill.manifest,
+    version=__version__,
+)
+_HardenedAwinAffiliateSkill.manifest = _replace(
+    _HardenedAwinAffiliateSkill.manifest,
+    version=__version__,
+)
+
+
+class AwinAffiliateSkill(_HardenedAwinAffiliateSkill):
+    manifest = _replace(_HardenedAwinAffiliateSkill.manifest, version=__version__)
 
 
 def create_skill():
@@ -84,5 +103,6 @@ __all__ = [
     "LIST_CREATIVES_API",
     "SKILL_ID",
     "STORAGE_KEY",
+    "__version__",
     "create_skill",
 ]

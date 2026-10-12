@@ -8,7 +8,7 @@ The detailed workflow is in `docs/release-process.md`.
 
 - [ ] Skill ID remains `awin-affiliate`.
 - [ ] Package entry point matches the Skill ID.
-- [ ] Semantic package version matches `SkillManifest.version`.
+- [ ] `pyproject.toml`, package `__version__`, and base/hardened/exported Skill manifests report the same semantic version.
 - [ ] Runtime API compatibility is documented.
 - [ ] Package capability metadata matches the executable manifest.
 - [ ] Stable storage keys have not changed without a migration.
@@ -16,6 +16,7 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Every exposed Management API appears exactly once in `docs/management-api-contracts.md`.
 - [ ] Existing Management API meanings remain backward compatible or use a new versioned contract ID.
 - [ ] The documented compatibility candidate has been accepted using live evidence before 1.0.
+- [ ] `python -m tools.release_preflight` passes.
 
 ## Architecture
 
@@ -59,6 +60,7 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Secret-redaction diagnostics tests.
 - [ ] Complete offline V1 acceptance flow.
 - [ ] Management-contract documentation inventory matches the manifest.
+- [ ] Release-preflight drift tests cover package versions and stable-license requirements.
 
 ## CI and artifacts
 
@@ -66,8 +68,10 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Python 3.13 passes.
 - [ ] Python 3.14 passes.
 - [ ] Pinned reviewed GamerHQ Skill SDK commit is used.
+- [ ] Repository release preflight runs before artifact build.
 - [ ] Wheel builds successfully.
 - [ ] Built wheel installs and imports outside the source tree.
+- [ ] Installed distribution metadata matches package `__version__` and the executable Skill manifest.
 - [ ] Source distribution builds successfully for a stable release.
 - [ ] `pip check` passes.
 - [ ] Final artifacts are built from the exact reviewed release commit/tag.
@@ -100,7 +104,8 @@ The detailed workflow is in `docs/release-process.md`.
 
 - [ ] Release branch/PR contains only approved release preparation.
 - [ ] Changelog entry is final.
-- [ ] Package/manifest/tests report the same version.
+- [ ] Package metadata, package `__version__`, and every runtime-visible manifest report the same version.
+- [ ] README no longer reports `BLOCKED BY LIVE ACCEPTANCE` for a stable 1.x candidate.
 - [ ] Immutable `v<version>` tag points to the reviewed `main` commit.
 - [ ] GitHub Release exists.
 - [ ] Wheel and source distribution are attached or otherwise published through the approved channel.

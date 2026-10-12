@@ -14,12 +14,16 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 - Added a lean contributor guide with local setup, security rules, branch workflow, compatibility rules and Definition of Done.
 - Added an independent Skill release process covering versioning, CI/artifacts, stable-release gates, tags, GitHub Releases, optional PyPI publication and rollback boundaries.
 - Added Issue #23 to capture the owner decision for legal/license identity and the initial 1.0 distribution channel without guessing either choice.
+- Added a repository-local release preflight that validates package/manifest identity, Runtime metadata, entry points, capabilities, README/changelog version state and Management contract documentation.
+- Added regression tests proving version drift is rejected and stable 1.x candidates require an approved `LICENSE` file.
 
 ### Changed
 
 - Expanded the live-acceptance runbook with evidence-handling rules, failure classification and explicit links to the Management contract candidate, release process and decision gates.
 - Expanded the release checklist to include Python 3.13, built wheel/source distribution, concurrency/contract checks, live-acceptance evidence and owner publication decisions.
 - Updated project status and README so the remaining 1.0 gates are explicit: live provider acceptance plus the owner license/distribution decision.
+- Centralized the package-owned runtime version and aligned the base, hardened and exported Skill manifests.
+- CI now runs the release preflight before building the wheel and verifies installed distribution metadata against the package version constant.
 
 ### Remaining Skill-owned work before 1.0
 
@@ -97,13 +101,13 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 
 - Added Creative Library filtering and pagination.
 - Added Creative previews.
-- Added single, multi-select and advertiser-wide enable/disable controls.
+- Added single/multi-select and advertiser-wide enable/disable controls.
 - Added shared per-guild mutation locking for Creative state.
 
 ## [0.3.0]
 
 - Added CreativeSource authority semantics.
-- Added authoritative NEW / ACTIVE / MISSING / restored synchronization.
+- Added authoritative NEW / ACTIVE / MISSING / restored transitions for authoritative sources.
 - Added safe manual HTML integration through the shared sync engine.
 
 ## [0.2.0]
