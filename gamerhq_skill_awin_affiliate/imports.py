@@ -84,8 +84,10 @@ def _validated_awin_url(value: str, *, label: str) -> str:
     raw = str(value).strip()
     parsed = urlparse(raw)
     host = (parsed.hostname or "").lower()
-    if parsed.scheme not in {"https", "http"}:
-        raise CreativeImportError(f"{label} must use http or https.")
+    if parsed.scheme != "https":
+        raise CreativeImportError(f"{label} must use https.")
+    if parsed.username is not None or parsed.password is not None:
+        raise CreativeImportError(f"{label} must not contain URL credentials.")
     if host not in {"awin1.com", "www.awin1.com", "awin.com", "www.awin.com"} and not host.endswith(".awin1.com"):
         raise CreativeImportError(f"{label} is not an Awin URL.")
     return raw
