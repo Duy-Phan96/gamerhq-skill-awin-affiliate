@@ -59,6 +59,7 @@ from gamerhq_skill_awin_affiliate import __version__
    - release status.
 7. Merge only after the complete CI matrix passes.
 8. Verify the post-merge `main` CI run.
+9. For release-readiness claims, verify the exact post-merge `main` artifact dry run as well as the normal Skill CI run.
 
 ## Repository release preflight
 
@@ -122,7 +123,13 @@ The repository includes:
 .github/workflows/release-artifact-dry-run.yml
 ```
 
-The workflow runs on pull requests and manual dispatch. It:
+The workflow runs:
+
+- on pull requests, validating the proposed merged tree before review and merge;
+- on every push to `main`, validating the exact post-merge commit;
+- through manual `workflow_dispatch` when an explicit rerun is needed.
+
+The workflow:
 
 - runs the release preflight;
 - builds wheel and source distribution from the same commit;
@@ -132,6 +139,8 @@ The workflow runs on pull requests and manual dispatch. It:
 - verifies distribution version, package `__version__`, Skill manifest version, Skill ID and Runtime API outside the source tree;
 - generates SHA-256 checksums;
 - uploads temporary GitHub Actions artifacts for review.
+
+Pull-request evidence proves the proposed tree. It does not replace the successful `main`-push run for the exact reviewed post-merge commit. Release-readiness claims and final release preparation must cite that exact-main evidence.
 
 This workflow is verification only. It must not create a tag, GitHub Release, PyPI publication or downstream deployment.
 
@@ -147,6 +156,7 @@ Do not prepare or merge the final `1.0.0` release PR until:
 - `docs/management-api-contracts.md` is accepted as the stable V1 baseline;
 - storage, secret and scheduler identities are accepted;
 - Issue #23 license identity and distribution decisions are resolved;
+- Issue #33 branch protection is enabled, or the owner records an explicit temporary exception before the release PR;
 - release checklist is complete.
 
 ## Stable release preparation
@@ -178,13 +188,14 @@ Required changes:
 
 After the release PR is merged and post-merge `main` CI is green:
 
-1. create immutable tag `v<version>` from the exact reviewed `main` commit;
-2. verify the tag points to that commit;
-3. create a GitHub Release from the tag;
-4. attach the wheel and source distribution;
-5. include checksums where practical;
-6. publish concise release notes with compatibility, security and migration impact;
-7. state explicitly that downstream hosts choose their own adoption/deployment timing.
+1. verify the exact post-merge `main` artifact dry run is green;
+2. create immutable tag `v<version>` from that exact reviewed `main` commit;
+3. verify the tag points to that commit;
+4. create a GitHub Release from the tag;
+5. attach the wheel and source distribution;
+6. include checksums where practical;
+7. publish concise release notes with compatibility, security and migration impact;
+8. state explicitly that downstream hosts choose their own adoption/deployment timing.
 
 Do not move an existing release tag.
 

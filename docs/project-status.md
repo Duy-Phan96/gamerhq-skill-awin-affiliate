@@ -72,6 +72,8 @@ Implemented and covered by repository tests:
 - Discord-safe imported fallback-title bounds;
 - built-wheel verification on Python 3.12, 3.13 and 3.14;
 - complete host-neutral request/response documentation for every manifest-declared Management API;
+- exact post-merge `main` wheel/source-distribution verification with clean installs and checksums;
+- structured bug/feature/PR templates and CODEOWNERS;
 - lean contributor, live-acceptance evidence and independent release workflows.
 
 ## Architecture decisions already made
@@ -141,6 +143,7 @@ Delivered:
 - HTTPS-only outbound Creative URLs;
 - Discord-safe fallback title limits;
 - built-wheel and Python 3.12/3.13/3.14 compatibility checks;
+- exact-main wheel/source-distribution dry-run evidence;
 - clear project-status, architecture and release documentation.
 
 Verified acceptance:
@@ -150,7 +153,8 @@ Verified acceptance:
 - Preview Next remains non-mutating;
 - storage keys and public Management API IDs remain unchanged;
 - CI passes on Python 3.12, 3.13 and 3.14;
-- built wheel imports successfully outside the source tree.
+- built wheel imports successfully outside the source tree;
+- wheel and source distribution clean-install successfully from the exact reviewed `main` commit.
 
 ## Current milestone
 
@@ -182,7 +186,7 @@ Required evidence:
 - diagnostics free of credential material;
 - confirmation that real provider responses fit the documented compatibility candidate or require only an explicit additive adjustment.
 
-## Parallel owner decision
+## Parallel owner decisions
 
 ### Decision — License identity and distribution channel
 
@@ -200,6 +204,21 @@ Required before publication of stable 1.0 artifacts:
 
 No legal identity is inferred automatically from repository metadata.
 
+### Decision — Main branch protection
+
+Status: Open owner action
+
+Tracker: Issue #33
+
+Recommended before the final 1.0 release PR:
+
+- require pull requests for `main`;
+- require `test (3.12)`, `test (3.13)`, `test (3.14)` and the release artifact `build-and-verify` check where applicable;
+- block force pushes and deletion of `main`;
+- keep the process lightweight for a solo maintainer.
+
+The connected repository automation cannot safely change repository-administration rules. The owner must enable the rule or record an explicit temporary exception before the final 1.0 release PR.
+
 ## Planned stable release
 
 ### Milestone — 1.0.0 Stable Public Contract
@@ -212,8 +231,10 @@ Entry criteria:
 - the documented Management API compatibility candidate is accepted as the stable V1 baseline;
 - storage, secret and scheduler identities are accepted as the stable V1 baseline;
 - Issue #23 is resolved;
+- Issue #33 branch protection is enabled or an explicit temporary owner exception is recorded;
 - release checklist is complete;
-- final package build and CI are green.
+- final package build and CI are green;
+- exact post-merge `main` artifact dry run is green for the release commit.
 
 Expected release outputs:
 
@@ -223,6 +244,7 @@ Expected release outputs:
 - immutable Git tag;
 - GitHub Release;
 - installable wheel and source distribution;
+- SHA-256 checksums;
 - release notes with explicit downstream deployment boundary.
 
 Release procedure:
@@ -236,17 +258,20 @@ Release procedure:
 1. Execute Issue #18 live acceptance and complete the report template.
 2. Confirm or explicitly amend the documented 1.0 Management API baseline using live evidence.
 3. Resolve Issue #23 for license identity and distribution channel.
-4. Prepare the 1.0.0 release PR, tag, notes and artifacts after both gates pass.
+4. Resolve Issue #33 by enabling branch protection or recording an explicit temporary owner exception.
+5. Prepare the 1.0.0 release PR, tag, notes and artifacts after all entry gates pass.
 
 ### P2
 
-5. Refactor the large Management orchestrator only after the 1.0 compatibility baseline is stable.
-6. Add further provider capabilities only after real adoption evidence and a supported Awin surface exist.
+6. Refactor the large Management orchestrator only after the 1.0 compatibility baseline is stable.
+7. Add further provider capabilities only after real adoption evidence and a supported Awin surface exist.
 
 ### Completed repository-governance work
 
 - `CONTRIBUTING.md` defines local setup, security, PR workflow and Definition of Done.
-- `docs/release-process.md` defines independent versioning, artifact, tag, release and rollback behavior.
+- issue and pull-request templates require evidence, impact analysis and repository-boundary checks.
+- `CODEOWNERS` identifies repository review ownership.
+- `docs/release-process.md` defines independent versioning, exact-main artifact evidence, tag, release and rollback behavior.
 - `docs/live-acceptance-report-template.md` defines safe, redacted evidence capture.
 
 ### Explicitly postponed
@@ -257,13 +282,3 @@ Release procedure:
 - additional affiliate networks;
 - generic cross-Skill orchestration;
 - monetization work before real adoption evidence.
-
-## Decisions still required
-
-- confirm the final legal/license identity before publishing 1.0 artifacts;
-- choose the final distribution channel: GitHub Release only, or GitHub Release plus PyPI;
-- after live acceptance, confirm whether any real Awin payload requires an additive compatibility adjustment.
-
-## Definition of success
-
-Awin Affiliate reaches 1.0 when the existing user workflow is demonstrably reliable, secure, documented and independently releasable—not when more features have been added.
