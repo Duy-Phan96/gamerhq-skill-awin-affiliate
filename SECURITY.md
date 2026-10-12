@@ -24,7 +24,7 @@ The token must never be:
 - copied into fixtures, screenshots or documentation;
 - included in exception messages.
 
-Connection status exposes only whether a token is stored.
+Connection status exposes only whether a token is stored. A masked compatibility marker, where present in the setup-status contract, is not a recoverable credential and must not be copied into diagnostics.
 
 ## External HTTP
 
@@ -32,7 +32,7 @@ All Awin API requests go through the host-mediated `http.external` port.
 
 The Skill does not receive the host HTTP client, environment or network configuration directly.
 
-## Discord
+## Discord and outbound URLs
 
 Portable Skill code never imports Discord.py.
 
@@ -45,19 +45,33 @@ Discord access is limited to declared public capabilities:
 
 Mentions are disabled for affiliate posts.
 
+Imported tracking and image URLs must:
+
+- use HTTPS;
+- resolve to a supported Awin host at import time;
+- contain no URL username/password component.
+
+Posting validates HTTPS again before constructing a Discord payload so malformed or legacy persisted values fail closed.
+
 ## Saved HTML
 
 Saved My Creative HTML is treated as untrusted input.
 
 The parser:
 
-- only accepts supported Awin tracking/image URLs;
+- only accepts supported HTTPS Awin tracking/image URLs;
 - extracts stable IDs from Awin query parameters;
-- rejects unsupported/non-Awin URLs;
+- rejects unsupported/non-Awin URLs and URL credentials;
 - does not execute HTML, JavaScript or embedded scripts;
 - does not automate an Awin login session.
 
 A saved page may be incomplete. Missing detection is therefore disabled unless one advertiser is explicitly confirmed as a complete snapshot.
+
+## Campaign data integrity
+
+Campaigns and their bounded delivery history are shared aggregate values per guild. Every aggregate read-modify-write cycle is protected by a per-guild campaign-store lock, while a separate per-campaign execution lock prevents Run Now, scheduled execution and management mutations for the same campaign from overwriting one another.
+
+Scheduler changes use best-effort persisted-state compensation on failure. The public storage port does not provide a transaction spanning multiple keys, so successful Discord delivery state is persisted before history where both writes cannot be atomic.
 
 ## Failure handling
 
@@ -70,6 +84,7 @@ sent
 blocked
 failed
 discord-send-failed
+campaign-state-missing-after-send
 ```
 
 Raw provider/Discord exception text must not be persisted.
