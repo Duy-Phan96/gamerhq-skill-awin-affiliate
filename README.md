@@ -55,12 +55,13 @@ The Skill never imports GamerHQ host internals and remains usable without Recurr
 
 ## Roadmap
 
-Next Skill-owned slices:
+The current Skill-owned milestone is **0.9.3 Data Integrity & Release Hardening**. It prioritizes campaign-state concurrency, outbound URL/payload safety and release readiness before live acceptance and 1.0.
 
-- optional authenticated Creative source adapter only if a documented/safely testable Awin surface becomes available
-- additional provider-side capabilities only when they belong to this Skill and can be expressed through stable public contracts
+Future provider capabilities remain optional and must belong to this Skill, use stable public contracts and be backed by a supported or safely testable Awin surface.
 
 Downstream host rendering is not implemented from this repository. A GamerHQ-compatible host may independently consume the public Management contracts exposed by this Skill. Any missing Host/Runtime capability is handled through a handoff rather than cross-repository modification.
+
+See [Project status and roadmap](docs/project-status.md) for the verified current state, priorities and release gates.
 
 ## Compliance
 
@@ -112,6 +113,7 @@ The importer can discover multiple advertisers from Awin tracking links in one p
 
 ## Documentation
 
+- [Project status and roadmap](docs/project-status.md)
 - [Setup](docs/setup.md)
 - [Architecture](docs/architecture.md)
 - [Awin API integration](docs/awin-api.md)
