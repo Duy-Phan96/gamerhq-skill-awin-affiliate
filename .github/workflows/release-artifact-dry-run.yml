@@ -1,0 +1,83 @@
+name: Release Artifact Dry Run
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GAMERHQ_SDK_REF: c27260e8831115f8cf78cc58d5322dbdd101a563
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install reviewed build tooling and Skill SDK
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build==1.6.1
+          python -m pip install "gamerhq-skill-sdk @ git+https://github.com/Duy-Phan96/GamerHQ.git@${GAMERHQ_SDK_REF}"
+
+      - name: Run release preflight
+        run: python -m tools.release_preflight
+
+      - name: Build wheel and source distribution
+        run: python -m build
+
+      - name: Verify artifact contents and write checksums
+        run: python -m tools.verify_release_artifacts --write-checksums
+
+      - name: Install-test wheel in a clean environment
+        run: |
+          WHEEL_PATH="$(find "$GITHUB_WORKSPACE/dist" -maxdepth 1 -name '*.whl' -print -quit)"
+          python -m venv /tmp/awin-wheel-venv
+          /tmp/awin-wheel-venv/bin/python -m pip install --upgrade pip
+          /tmp/awin-wheel-venv/bin/python -m pip install "gamerhq-skill-sdk @ git+https://github.com/Duy-Phan96/GamerHQ.git@${GAMERHQ_SDK_REF}"
+          /tmp/awin-wheel-venv/bin/python -m pip install --no-deps "$WHEEL_PATH"
+          cd /tmp
+          /tmp/awin-wheel-venv/bin/python - <<'PY'
+          from importlib.metadata import version
+          from gamerhq_skill_awin_affiliate import __version__, create_skill
+
+          skill = create_skill()
+          assert version("gamerhq-skill-awin-affiliate") == __version__
+          assert skill.manifest.version == __version__
+          assert skill.manifest.id == "awin-affiliate"
+          assert skill.manifest.runtime_api_version == "1"
+          PY
+
+      - name: Install-test source distribution in a clean environment
+        run: |
+          SDIST_PATH="$(find "$GITHUB_WORKSPACE/dist" -maxdepth 1 -name '*.tar.gz' -print -quit)"
+          python -m venv /tmp/awin-sdist-venv
+          /tmp/awin-sdist-venv/bin/python -m pip install --upgrade pip
+          /tmp/awin-sdist-venv/bin/python -m pip install "gamerhq-skill-sdk @ git+https://github.com/Duy-Phan96/GamerHQ.git@${GAMERHQ_SDK_REF}"
+          /tmp/awin-sdist-venv/bin/python -m pip install --no-deps "$SDIST_PATH"
+          cd /tmp
+          /tmp/awin-sdist-venv/bin/python - <<'PY'
+          from importlib.metadata import version
+          from gamerhq_skill_awin_affiliate import __version__, create_skill
+
+          skill = create_skill()
+          assert version("gamerhq-skill-awin-affiliate") == __version__
+          assert skill.manifest.version == __version__
+          assert skill.manifest.id == "awin-affiliate"
+          assert skill.manifest.runtime_api_version == "1"
+          PY
+
+      - name: Upload dry-run release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: awin-affiliate-release-dry-run-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
