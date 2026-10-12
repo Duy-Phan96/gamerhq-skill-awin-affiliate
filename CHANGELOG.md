@@ -10,12 +10,23 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 
 - Added a complete host-neutral Management API contract reference with request fields, response shapes, side effects, validation behavior and compatibility notes for every manifest-declared contract.
 - Added a regression test that keeps the documented Management contract inventory synchronized with the executable manifest.
+- Added a redacted live-acceptance report template covering package identity, provider setup, Creative ingestion, Post Now, Campaigns, restart recovery, diagnostics and final 1.0 sign-off.
+- Added a lean contributor guide with local setup, security rules, branch workflow, compatibility rules and Definition of Done.
+- Added an independent Skill release process covering versioning, CI/artifacts, stable-release gates, tags, GitHub Releases, optional PyPI publication and rollback boundaries.
+- Added Issue #23 to capture the owner decision for legal/license identity and the initial 1.0 distribution channel without guessing either choice.
+
+### Changed
+
+- Expanded the live-acceptance runbook with evidence-handling rules, failure classification and explicit links to the Management contract candidate, release process and decision gates.
+- Expanded the release checklist to include Python 3.13, built wheel/source distribution, concurrency/contract checks, live-acceptance evidence and owner publication decisions.
+- Updated project status and README so the remaining 1.0 gates are explicit: live provider acceptance plus the owner license/distribution decision.
 
 ### Remaining Skill-owned work before 1.0
 
 - Execute the documented live acceptance runbook with a dedicated test Awin account or non-production credentials where practical.
+- Complete and approve the redacted live-acceptance report.
 - Complete the final 1.0 compatibility baseline review after that acceptance passes.
-- Confirm the intended legal/license identity before publishing stable release artifacts.
+- Resolve Issue #23 and add the approved legal/license identity before publishing stable release artifacts.
 
 ## [0.9.3]
 
