@@ -33,6 +33,12 @@ python -m pip install pytest==9.1.1
 
 ## Tests
 
+Run the release metadata/compatibility preflight:
+
+```bash
+python -m tools.release_preflight
+```
+
 Run the full offline suite:
 
 ```bash
@@ -56,6 +62,24 @@ Tests must not require:
 - unrestricted internet access.
 
 Use fake public Runtime ports for HTTP, secrets, storage, Discord, scheduler and audit behavior.
+
+## Version identity
+
+The package-owned runtime version is defined in:
+
+```text
+gamerhq_skill_awin_affiliate/_version.py
+```
+
+Release preparation must keep these values aligned:
+
+- `pyproject.toml` project version;
+- package `__version__`;
+- base, hardened and exported Skill manifests;
+- README current version;
+- changelog version section.
+
+Do not bypass the release preflight to work around version drift.
 
 ## Security rules
 
@@ -89,6 +113,7 @@ A pull request should:
 - update relevant documentation and `CHANGELOG.md`;
 - state public-contract, storage, migration, security and capability impact;
 - avoid unrelated cleanup or cross-repository implementation;
+- pass the release preflight;
 - pass the complete Python 3.12/3.13/3.14 wheel-install CI matrix.
 
 ## Compatibility rules
@@ -111,6 +136,7 @@ A change is complete when:
 
 - behavior is implemented in this repository;
 - focused regression tests exist;
+- the release preflight passes;
 - the full suite passes;
 - the built wheel imports outside the source tree;
 - documentation reflects the actual implementation;
