@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.12', '3.14']
+        python: ['3.12', '3.13', '3.14']
 
     steps:
       - uses: actions/checkout@v4
@@ -29,10 +29,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "gamerhq-skill-sdk @ git+https://github.com/Duy-Phan96/GamerHQ.git@${GAMERHQ_SDK_REF}"
-      - name: Install Skill package
+      - name: Build Skill wheel
+        run: python -m pip wheel --no-deps . --wheel-dir dist
+      - name: Install built Skill package and test tools
         run: |
-          python -m pip install --no-deps -e .
+          python -m pip install --no-deps --force-reinstall dist/*.whl
           python -m pip install pytest==9.1.1
+      - name: Verify installed wheel outside the source tree
+        run: |
+          cd /tmp
+          python -c "from gamerhq_skill_awin_affiliate import create_skill; skill = create_skill(); assert skill.manifest.id == 'awin-affiliate'; assert skill.manifest.version == '0.9.3'"
       - name: Check dependencies
         run: python -m pip check
       - name: Run offline tests

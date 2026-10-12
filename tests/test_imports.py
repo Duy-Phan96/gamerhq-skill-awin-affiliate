@@ -40,3 +40,28 @@ def test_rejects_missing_required_tracking_parameter():
     bad = HTML.replace("&r=3095707", "")
     with pytest.raises(CreativeImportError, match="parameter 'r'"):
         AwinHtmlCreativeSource().parse(bad)
+
+
+def test_rejects_http_tracking_and_image_urls():
+    bad_tracking = HTML.replace(
+        "https://www.awin1.com/cread.php",
+        "http://www.awin1.com/cread.php",
+    )
+    with pytest.raises(CreativeImportError, match="Tracking URL must use https"):
+        AwinHtmlCreativeSource().parse(bad_tracking)
+
+    bad_image = HTML.replace(
+        "https://www.awin1.com/cshow.php",
+        "http://www.awin1.com/cshow.php",
+    )
+    with pytest.raises(CreativeImportError, match="Image URL must use https"):
+        AwinHtmlCreativeSource().parse(bad_image)
+
+
+def test_rejects_url_credentials_even_on_awin_host():
+    bad = HTML.replace(
+        "https://www.awin1.com/cread.php",
+        "https://user:password@www.awin1.com/cread.php",
+    )
+    with pytest.raises(CreativeImportError, match="must not contain URL credentials"):
+        AwinHtmlCreativeSource().parse(bad)
