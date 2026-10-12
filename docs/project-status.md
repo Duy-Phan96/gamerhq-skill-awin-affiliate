@@ -8,13 +8,12 @@ Repository: `Duy-Phan96/gamerhq-skill-awin-affiliate`
 
 Awin Affiliate is a feature-complete engineering beta approaching 1.0.
 
-Current package version: `0.9.2`
+Current package version: `0.9.3`
 
 Current release state:
 
 ```text
-BLOCKED BY 0.9.3 DATA-INTEGRITY HARDENING
-THEN BLOCKED BY LIVE ACCEPTANCE
+BLOCKED BY LIVE ACCEPTANCE
 ```
 
 The primary V1 workflow is implemented:
@@ -65,7 +64,12 @@ Implemented and covered by repository tests:
 - Preview Next without persisted rotation mutation;
 - bounded sent/blocked/failed campaign history;
 - aggregate diagnostics without credential material;
-- complete offline V1 management-flow acceptance using fake public Runtime ports.
+- complete offline V1 management-flow acceptance using fake public Runtime ports;
+- concurrency-safe aggregate Campaign/History mutations across parallel campaigns;
+- same-campaign serialization across Run Now, scheduled execution, pause, edit and delete;
+- HTTPS-only imported and rendered Creative URLs;
+- Discord-safe imported fallback-title bounds;
+- built-wheel verification on Python 3.12, 3.13 and 3.14.
 
 ## Architecture decisions already made
 
@@ -100,23 +104,28 @@ Scheduler handler:
 
 Public Management API IDs are documented in `docs/storage-and-contracts.md`.
 
-## Current highest-risk finding
+## Resolved highest-risk finding
 
-Campaign configuration and delivery history are aggregate values shared by all campaigns in one guild.
+The project audit found that campaign configuration and delivery history were shared aggregate values, while different code paths used incompatible lock scopes. Parallel read-modify-write operations could overwrite rotation, pause/update/delete changes or history rows.
 
-The pre-0.9.3 implementation uses different lock scopes for campaign execution and campaign-management mutations. Concurrent read-modify-write operations can therefore overwrite newer campaign rotation, pause/update/delete changes or history rows.
+0.9.3 resolves this with:
 
-This is a data-integrity and 1.0 release blocker tracked by Issue #19.
+- one execution lock per campaign;
+- one aggregate campaign-store lock per guild;
+- latest-state reload before committing rotation;
+- same-campaign serialization for Run Now, scheduled execution and management mutations;
+- scheduler-failure compensation;
+- deterministic concurrency regression tests.
 
-## Current milestone
+Tracked by Issue #19.
+
+## Completed milestone
 
 ### Milestone — 0.9.3 Data Integrity & Release Hardening
 
-Status: In Progress
+Status: Completed
 
-Objective: make the existing V1 workflow reliable and formally release-ready without adding new product features.
-
-Committed deliverables:
+Delivered:
 
 - consistent per-guild campaign-store mutation boundary;
 - retained per-campaign execution serialization;
@@ -124,27 +133,27 @@ Committed deliverables:
 - protection against run-versus-pause/update/delete lost updates;
 - HTTPS-only outbound Creative URLs;
 - Discord-safe fallback title limits;
-- release-artifact and compatibility checks where repository-owned;
-- clear project-status and public-contract documentation.
+- built-wheel and Python 3.12/3.13/3.14 compatibility checks;
+- clear project-status, architecture and release documentation.
 
-Acceptance criteria:
+Verified acceptance:
 
-- no lost campaign-state or history updates under tested concurrency;
+- parallel campaign runs preserve both campaign state updates and history rows;
 - failed sends do not advance rotation;
 - Preview Next remains non-mutating;
-- existing storage keys and Management API IDs remain stable;
-- Python 3.12 and 3.14 CI pass;
-- no unresolved P0/P1 Skill-owned blocker remains before live acceptance.
+- storage keys and public Management API IDs remain unchanged;
+- CI passes on Python 3.12, 3.13 and 3.14;
+- built wheel imports successfully outside the source tree.
 
-## Next milestone
+## Current milestone
 
 ### Milestone — Live Provider Acceptance
 
-Status: Blocked by 0.9.3
+Status: Ready to execute; requires a real test/non-production Awin account and an isolated compatible host.
 
 Tracker: Issue #18
 
-Objective: validate the reviewed Skill against a real test/non-production Awin publisher account and an isolated compatible host.
+Objective: validate the reviewed Skill against real provider and Discord behavior.
 
 Required evidence:
 
@@ -165,7 +174,6 @@ Status: Planned
 
 Entry criteria:
 
-- 0.9.3 data-integrity hardening complete;
 - live acceptance complete;
 - public Management API IDs accepted as the stable V1 baseline;
 - storage, secret and scheduler identities accepted as the stable V1 baseline;
@@ -182,22 +190,18 @@ Expected release outputs:
 
 ## Prioritized backlog
 
-### P0
-
-1. Prevent campaign and history lost updates under concurrent operations.
-
 ### P1
 
-2. Enforce HTTPS-only imported tracking/image URLs and validate again before rendering/sending.
-3. Bound imported fallback titles to Discord embed limits.
-4. Complete release-artifact and compatibility CI hardening.
-5. Execute Issue #18 live acceptance.
+1. Execute Issue #18 live acceptance.
+2. Freeze and document the final 1.0 request/response compatibility baseline.
+3. Confirm the intended legal/license identity and distribution channel.
+4. Prepare the 1.0.0 release PR, tag, notes and artifacts after acceptance passes.
 
 ### P2
 
-6. Expand request/response examples for all public Management contracts.
-7. Add a lean contributor guide and repository license file after the owner confirms the intended legal identity.
-8. Refactor the large Management orchestrator only after the 1.0 compatibility baseline is stable.
+5. Expand request/response examples for all public Management contracts.
+6. Add a lean contributor guide after the stable release baseline is accepted.
+7. Refactor the large Management orchestrator only after the 1.0 compatibility baseline is stable.
 
 ### Explicitly postponed
 
