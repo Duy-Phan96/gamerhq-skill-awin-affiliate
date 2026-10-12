@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from gamerhq_skill_awin_affiliate import AwinAffiliateSkill, create_skill
+from gamerhq_skill_awin_affiliate import (
+    AwinAffiliateSkill,
+    __version__,
+    create_skill,
+)
 from skill_runtime import (
     require_clean_skill_source,
     validate_skill_factory,
@@ -20,7 +24,7 @@ def test_source_stays_portable():
 def test_factory_matches_stable_skill_identity():
     report = validate_skill_factory(create_skill, expected_skill_id="awin-affiliate")
     assert report.skill_id == "awin-affiliate"
-    assert report.version == "0.9.3"
+    assert report.version == __version__
 
 
 def test_static_package_metadata_matches_manifest():
