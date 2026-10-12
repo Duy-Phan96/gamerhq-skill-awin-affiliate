@@ -4,13 +4,36 @@ This is the final repository-local acceptance procedure before considering the S
 
 It validates the Skill against a real Awin publisher account without changing another repository.
 
+Use `docs/live-acceptance-report-template.md` for the run record. Copy the template for one controlled test and record only redacted PASS/FAIL evidence.
+
 ## Preconditions
 
 - use a dedicated test/non-production Awin token where practical;
 - use a GamerHQ-compatible host that already implements this Skill's public Runtime capabilities;
 - keep the raw token out of screenshots, logs, issues and chat transcripts;
 - do not paste production host secrets into this repository;
-- use an isolated Discord test channel where practical.
+- use an isolated Discord test channel where practical;
+- review any evidence before sharing it;
+- identify the exact Skill version and immutable commit under test.
+
+## Evidence rules
+
+Allowed evidence:
+
+- package/manifest version and commit;
+- redacted PASS/FAIL outcomes;
+- aggregate counts;
+- safe message or workflow references;
+- safe error categories such as `SKILL`, `HOST`, `PROVIDER` or `ENVIRONMENT`.
+
+Never record:
+
+- raw or masked Awin token values;
+- `Authorization` headers;
+- `GAMERHQ_SKILL_SECRET_KEY`;
+- production `.env` values;
+- private runtime databases;
+- unreviewed logs or screenshots containing private account data.
 
 ## Acceptance scope
 
@@ -75,7 +98,7 @@ Preferred V1 path:
 
 Expected:
 
-- tracking/image URLs are recognized as Awin URLs;
+- tracking/image URLs are recognized as supported HTTPS Awin URLs;
 - publisher/advertiser/creative IDs are normalized;
 - duplicate stable IDs are deduplicated;
 - saved-page imports remain UPSERT_ONLY by default.
@@ -129,7 +152,7 @@ Expected:
 - image and safe offer link are correct;
 - returned `confirmPayload` identifies the exact previewed Creative.
 
-Then pass that exact payload to:
+Then pass that exact payload, unchanged, to:
 
 `awin-affiliate.post.send.v1`
 
@@ -171,7 +194,8 @@ Expected:
 - Creative Library persists;
 - campaign configuration persists;
 - enabled scheduler jobs are restored;
-- restart creates no duplicate campaign/job state.
+- restart creates no duplicate campaign/job state;
+- restart does not itself cause a duplicate post.
 
 ### 11. Diagnostics and health
 
@@ -184,29 +208,34 @@ Expected:
 - aggregate setup/Creative/campaign/history state is accurate;
 - raw token is absent;
 - masked token marker is absent from diagnostics;
-- raw provider/Discord exceptions are absent.
+- raw provider/Discord exceptions are absent;
+- health output contains no credential material.
 
 ## Pass criteria
 
-The acceptance passes when all tested public contracts behave as documented and no real credential/private value appears in output, logs or persisted normal Skill storage.
+The acceptance passes when:
+
+- all required sections in the report template are `PASS`;
+- tested public contracts behave as documented in `docs/management-api-contracts.md`;
+- no real credential/private value appears in output, logs or persisted normal Skill storage;
+- restart recovery produces no duplicate jobs or sends;
+- no unresolved Skill-owned functional/security blocker remains.
 
 ## Failure handling
 
-If failure is caused by this repository's code, fix it here with a regression test.
+Classify every failure:
 
-If failure requires a missing public Runtime/SDK/Host capability, stop and create a HANDOFF REQUIRED request. Do not modify that repository from this project.
+- `SKILL` — defect in this repository;
+- `HOST` — downstream rendering/runtime integration problem;
+- `PROVIDER` — Awin account/API/platform behavior;
+- `ENVIRONMENT` — test setup, permissions or connectivity;
+- `UNKNOWN` — not yet classified.
 
-## 1.0 decision
+If failure is caused by this repository's code, create an Issue, fix it here and add a regression test.
 
-After this runbook passes and the final compatibility baseline is reviewed:
+If failure requires a missing public Runtime/SDK/Host capability, stop and create a `HANDOFF REQUIRED` request. Do not modify that repository from this project.
 
-- confirm stable storage/secret keys;
-- confirm stable Management contract IDs;
-- confirm Runtime API compatibility;
-- promote the package to 1.0.0 in this repository only.
-
-A 1.0.0 Skill release does not imply or authorize a GamerHQ production deployment.
-
+Do not mark a provider or environment failure as a Skill pass.
 
 ## Automated prerequisite
 
@@ -216,4 +245,27 @@ Before executing this live runbook, the repository's offline end-to-end acceptan
 tests/test_v1_offline_acceptance_flow.py
 ```
 
-That test validates the complete Skill-owned workflow using fake public ports. Live acceptance remains necessary for real Awin provider behavior and real downstream host/Discord integration.
+The concurrency and documentation drift suites must also pass:
+
+```text
+tests/test_campaign_concurrency.py
+tests/test_management_contract_docs.py
+```
+
+CI must build and install the wheel and pass on Python 3.12, 3.13 and 3.14.
+
+These tests validate the complete Skill-owned workflow using fake public ports. Live acceptance remains necessary for real Awin provider behavior and real downstream host/Discord integration.
+
+## 1.0 decision
+
+After this runbook passes:
+
+- accept or explicitly amend the documented Management API compatibility candidate;
+- confirm stable storage/secret keys;
+- confirm the scheduler handler/job identity;
+- confirm Runtime API compatibility;
+- resolve Issue #23 for the legal/license identity and distribution channel;
+- complete `docs/release-checklist.md`;
+- prepare a separate `1.0.0` release PR according to `docs/release-process.md`.
+
+A 1.0.0 Skill release does not imply or authorize a GamerHQ production deployment.
