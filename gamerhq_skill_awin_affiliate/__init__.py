@@ -1,5 +1,6 @@
 from .awin_api import AwinAccount, AwinApiError, AwinClient, AwinProgramme
 from .creative_sources import CreativeSnapshot, CreativeSource, CreativeSourceAuthority
+from .hardened_skill import AwinAffiliateSkill
 from .imports import AwinHtmlCreativeSource, AwinSavedPageCreativeSource, CreativeImportError
 from .models import Creative, CreativeState
 from .sync import CreativeSyncResult, apply_creative_snapshot
@@ -32,7 +33,6 @@ from .skill import (
     LIST_CREATIVES_API,
     SKILL_ID,
     STORAGE_KEY,
-    AwinAffiliateSkill,
 )
 
 
