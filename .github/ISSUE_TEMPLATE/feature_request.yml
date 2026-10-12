@@ -1,0 +1,84 @@
+name: Feature proposal
+description: Propose a repository-owned improvement with clear user value and scope.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Proposals are evaluated against the standalone Awin Affiliate Skill's product vision and ownership boundary.
+
+        Do not assume an idea is approved scope. Do not request private changes to GamerHQ Host, Runtime/SDK, web, or another Skill here.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Describe the concrete administrator, publisher, or compatible-host problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: value
+    attributes:
+      label: Expected user or business value
+      description: Explain what measurable workflow, reliability, compliance, or adoption benefit this creates.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope classification
+      options:
+        - Existing committed scope or missing behavior
+        - Compatible additive improvement
+        - Post-1.0 future opportunity
+        - Unsure / needs product decision
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe the desired behavior, not a mandatory internal implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: contracts
+    attributes:
+      label: Public contract, storage, capability, or migration impact
+      description: State known impacts or write "None known". Incompatible behavior requires a new versioned contract or migration plan.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and simplifications considered
+      description: Prefer a small reliable solution over unnecessary architecture.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Observable outcome 1
+        - [ ] Observable outcome 2
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Repository boundaries
+      options:
+        - label: This proposal belongs to `gamerhq-skill-awin-affiliate`.
+          required: true
+        - label: It does not require this project to modify another repository directly.
+          required: true
+        - label: I did not include credentials, personal data, or private provider payloads.
+          required: true
