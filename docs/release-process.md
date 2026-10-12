@@ -34,6 +34,14 @@ Entry point: gamerhq.skills / awin-affiliate
 
 Public `.v1` Management contracts, documented storage keys, the secret key and scheduler-handler identity form the proposed 1.0 compatibility baseline.
 
+The package-owned runtime version is exposed as:
+
+```python
+from gamerhq_skill_awin_affiliate import __version__
+```
+
+`pyproject.toml`, `__version__`, and every runtime-visible Skill manifest must agree.
+
 ## Normal change workflow
 
 1. Create or identify a clear Issue for substantial work.
@@ -52,6 +60,26 @@ Public `.v1` Management contracts, documented storage keys, the secret key and s
 7. Merge only after the complete CI matrix passes.
 8. Verify the post-merge `main` CI run.
 
+## Repository release preflight
+
+Run the repository-local preflight before building or reviewing release artifacts:
+
+```bash
+python -m tools.release_preflight
+```
+
+The preflight verifies:
+
+- package name and semantic version identity;
+- `pyproject.toml`, package constant, base/hardened/exported manifests;
+- stable Skill ID, Runtime API and entry point;
+- capability metadata versus the executable manifest;
+- README and changelog version state;
+- exact Management API documentation inventory;
+- an approved `LICENSE` file and non-blocked README status for stable `1.x` candidates.
+
+CI runs this command before building the wheel. A release PR must not bypass or weaken these checks to make an inconsistent candidate pass.
+
 ## Automated release gates
 
 The current CI must pass on:
@@ -63,11 +91,12 @@ The current CI must pass on:
 For each version, CI must:
 
 1. install the pinned reviewed GamerHQ Skill SDK;
-2. build the Skill wheel;
-3. install the built wheel;
-4. verify the installed package outside the source tree;
-5. run `pip check`;
-6. run the complete offline suite.
+2. run the repository release preflight;
+3. build the Skill wheel;
+4. install the built wheel;
+5. verify installed distribution metadata, package version and Skill manifest outside the source tree;
+6. run `pip check`;
+7. run the complete offline suite.
 
 Before a stable release, also build a source distribution locally or in a release workflow:
 
@@ -108,12 +137,14 @@ The release PR should contain only release preparation and approved final correc
 Required changes:
 
 - update `pyproject.toml` version;
-- update `SkillManifest.version`;
+- update `gamerhq_skill_awin_affiliate/_version.py`;
+- confirm base, hardened and exported Skill manifests resolve to the same package version;
 - update version assertions/tests;
 - promote the matching `CHANGELOG.md` section;
 - update project status from blocked to ready/released as appropriate;
 - add or update the approved `LICENSE` file;
 - confirm README and contract documentation reflect the release;
+- run `python -m tools.release_preflight`;
 - build and install-test wheel and source distribution;
 - prepare release notes.
 
