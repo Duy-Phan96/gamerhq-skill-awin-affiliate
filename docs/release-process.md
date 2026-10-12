@@ -98,11 +98,12 @@ For each version, CI must:
 6. run `pip check`;
 7. run the complete offline suite.
 
-Before a stable release, also build a source distribution locally or in a release workflow:
+Before a stable release, build both a wheel and source distribution:
 
 ```bash
-python -m pip install build
+python -m pip install build==1.6.1
 python -m build
+python -m tools.verify_release_artifacts --write-checksums
 ```
 
 Expected artifacts:
@@ -110,7 +111,31 @@ Expected artifacts:
 ```text
 dist/gamerhq_skill_awin_affiliate-<version>-py3-none-any.whl
 dist/gamerhq_skill_awin_affiliate-<version>.tar.gz
+dist/SHA256SUMS.txt
 ```
+
+## Non-publishing artifact dry run
+
+The repository includes:
+
+```text
+.github/workflows/release-artifact-dry-run.yml
+```
+
+The workflow runs on pull requests and manual dispatch. It:
+
+- runs the release preflight;
+- builds wheel and source distribution from the same commit;
+- verifies filenames, metadata and required contents;
+- clean-install-tests the wheel in one virtual environment;
+- clean-install-tests the source distribution in another virtual environment;
+- verifies distribution version, package `__version__`, Skill manifest version, Skill ID and Runtime API outside the source tree;
+- generates SHA-256 checksums;
+- uploads temporary GitHub Actions artifacts for review.
+
+This workflow is verification only. It must not create a tag, GitHub Release, PyPI publication or downstream deployment.
+
+See `docs/release-artifact-dry-run.md` for details.
 
 ## 1.0.0 entry gates
 
@@ -145,6 +170,7 @@ Required changes:
 - add or update the approved `LICENSE` file;
 - confirm README and contract documentation reflect the release;
 - run `python -m tools.release_preflight`;
+- run the release-artifact dry run;
 - build and install-test wheel and source distribution;
 - prepare release notes.
 

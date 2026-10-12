@@ -52,7 +52,8 @@ The current implementation covers:
 26. complete offline V1 acceptance through fake public Runtime ports,
 27. concurrency-safe campaign and history persistence across parallel operations,
 28. HTTPS-only outbound Creative URLs with render-time revalidation,
-29. built-wheel verification on Python 3.12, 3.13 and 3.14.
+29. built-wheel verification on Python 3.12, 3.13 and 3.14,
+30. non-publishing wheel/source-distribution release artifact verification.
 
 The Skill never imports GamerHQ host internals and remains usable without Recurring Posts.
 
@@ -103,10 +104,19 @@ Python 3.12+.
 Tests are offline and must never require real Awin credentials.
 
 ```bash
+python -m tools.release_preflight
 python -m pytest
 ```
 
-CI builds and installs the package wheel before running the suite on Python 3.12, 3.13 and 3.14.
+Build and verify both release artifact formats without publishing:
+
+```bash
+python -m pip install build==1.6.1
+python -m build
+python -m tools.verify_release_artifacts --write-checksums
+```
+
+CI builds and installs the package wheel before running the suite on Python 3.12, 3.13 and 3.14. A separate non-publishing workflow clean-install-tests both the wheel and source distribution and uploads temporary verification artifacts.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the local setup, security rules, branch workflow and Definition of Done.
 
@@ -143,6 +153,7 @@ The importer can discover multiple advertisers from Awin tracking links in one p
 - [Live acceptance before 1.0](docs/live-acceptance.md)
 - [Live acceptance report template](docs/live-acceptance-report-template.md)
 - [Release process](docs/release-process.md)
+- [Release artifact dry run](docs/release-artifact-dry-run.md)
 - [Release checklist](docs/release-checklist.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
