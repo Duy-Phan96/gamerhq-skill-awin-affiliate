@@ -2,12 +2,12 @@
 
 Standalone Awin Affiliate Skill for GamerHQ-compatible hosts.
 
-> Early development: the Skill now includes secure Awin account connection, Creative synchronization/library management, preview-confirmed posting, and standalone recurring Awin campaigns.
+> Engineering beta: the Skill includes secure Awin account connection, Creative synchronization/library management, preview-confirmed posting, standalone recurring campaigns, bounded history and safe diagnostics.
 
 ## Goals
 
-- discover and synchronize Awin advertisers and creatives
-- browse, preview, enable and disable creatives
+- discover and synchronize Awin advertisers and Creatives
+- browse, preview, enable and disable Creatives
 - post affiliate banners to Discord with visible disclosure
 - run recurring Awin campaigns with built-in rotation
 - remain fully usable without the Recurring Posts Skill
@@ -49,13 +49,18 @@ The current implementation covers:
 23. blocked-state handling when no eligible Creative remains,
 24. safe aggregate diagnostics for setup, Creative states, campaign states and delivery outcomes,
 25. richer health detail including blocked campaign count without exposing credentials,
-26. offline tests with fake HTTP/secret/Discord/scheduler ports — no real Awin credentials required.
+26. complete offline V1 acceptance through fake public Runtime ports,
+27. concurrency-safe campaign and history persistence across parallel operations,
+28. HTTPS-only outbound Creative URLs with render-time revalidation,
+29. built-wheel verification on Python 3.12, 3.13 and 3.14.
 
 The Skill never imports GamerHQ host internals and remains usable without Recurring Posts.
 
 ## Roadmap
 
-The current Skill-owned milestone is **0.9.3 Data Integrity & Release Hardening**. It prioritizes campaign-state concurrency, outbound URL/payload safety and release readiness before live acceptance and 1.0.
+The **0.9.3 Data Integrity & Release Hardening** milestone is complete.
+
+The current Skill-owned gate is **Live Provider Acceptance**, tracked by Issue #18. It validates real Awin account responses, Creative ingestion, Discord posting, campaign operation and restart recovery. After that acceptance passes, the next planned milestone is **1.0.0 Stable Public Contract**.
 
 Future provider capabilities remain optional and must belong to this Skill, use stable public contracts and be backed by a supported or safely testable Awin surface.
 
@@ -65,7 +70,7 @@ See [Project status and roadmap](docs/project-status.md) for the verified curren
 
 ## Compliance
 
-Affiliate posts will default to a visible disclosure such as:
+Affiliate posts default to a visible disclosure:
 
 `Werbung · Affiliate-Link`
 
@@ -83,7 +88,7 @@ Connect Awin token
 → browse advertisers/programmes
 ```
 
-The access token is never returned after setup; status only exposes a masked marker.
+The access token is never returned after setup; status only exposes connection state and a compatibility-safe masked marker where applicable.
 
 See `docs/awin-api.md` for API details and limitations.
 
@@ -97,19 +102,25 @@ Tests are offline and must never require real Awin credentials.
 python -m pytest
 ```
 
+CI builds and installs the package wheel before running the suite on Python 3.12, 3.13 and 3.14.
+
 ## Status
 
-Pre-1.0 and independently releasable.
+Current package version: **0.9.3**
 
-This repository owns only the Awin Skill package. A green Skill release does not imply a GamerHQ production deployment or require a synchronized Host release. Public contracts and storage keys should still be treated deliberately so migrations remain understandable.
+Current release state:
 
+```text
+BLOCKED BY LIVE ACCEPTANCE
+```
+
+This repository owns only the Awin Skill package. A green Skill release does not imply a GamerHQ production deployment or require a synchronized Host release. Public contracts and storage keys are treated as the intended 1.0 compatibility baseline pending the final live acceptance review.
 
 ## Saved My Creative HTML import
 
 When the complete banner library is unavailable through a documented Publisher API, an administrator can save/export the rendered My Creative HTML and import it through the Skill.
 
 The importer can discover multiple advertisers from Awin tracking links in one page. Imports are **UPSERT_ONLY by default**. Missing detection is enabled only when the administrator explicitly supplies one `completeAdvertiserId`, confirming that the saved HTML represents the complete Creative set for that advertiser. Other advertisers in the same page remain UPSERT_ONLY.
-
 
 ## Documentation
 
