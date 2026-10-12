@@ -61,6 +61,8 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Complete offline V1 acceptance flow.
 - [ ] Management-contract documentation inventory matches the manifest.
 - [ ] Release-preflight drift tests cover package versions and stable-license requirements.
+- [ ] Artifact-verifier tests reject missing files and incorrect metadata.
+- [ ] Checksum-generation tests cover wheel and source distribution.
 
 ## CI and artifacts
 
@@ -72,7 +74,13 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Wheel builds successfully.
 - [ ] Built wheel installs and imports outside the source tree.
 - [ ] Installed distribution metadata matches package `__version__` and the executable Skill manifest.
-- [ ] Source distribution builds successfully for a stable release.
+- [ ] Source distribution builds successfully.
+- [ ] Wheel and source distribution are built from the same reviewed commit.
+- [ ] `python -m tools.verify_release_artifacts --write-checksums` passes.
+- [ ] Wheel clean-install acceptance passes in an isolated virtual environment.
+- [ ] Source-distribution clean-install acceptance passes in a separate isolated virtual environment.
+- [ ] `SHA256SUMS.txt` covers both artifact formats.
+- [ ] Non-publishing dry-run artifacts are available for review in GitHub Actions.
 - [ ] `pip check` passes.
 - [ ] Final artifacts are built from the exact reviewed release commit/tag.
 
@@ -106,9 +114,11 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Changelog entry is final.
 - [ ] Package metadata, package `__version__`, and every runtime-visible manifest report the same version.
 - [ ] README no longer reports `BLOCKED BY LIVE ACCEPTANCE` for a stable 1.x candidate.
+- [ ] Release-artifact dry run passes on the exact release-candidate commit.
 - [ ] Immutable `v<version>` tag points to the reviewed `main` commit.
 - [ ] GitHub Release exists.
 - [ ] Wheel and source distribution are attached or otherwise published through the approved channel.
+- [ ] Published artifact checksums match the reviewed dry-run/release build.
 - [ ] Release notes include public-contract, migration, security and known-limitation impact.
 - [ ] Release notes state that this Skill release does not authorize a downstream GamerHQ deployment.
 - [ ] Post-release `main` CI is green.
