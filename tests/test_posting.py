@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from gamerhq_skill_awin_affiliate.models import Creative, CreativeState
@@ -47,6 +49,30 @@ def test_render_post_always_contains_disclosure_and_https_link_button():
     assert rendered["embed"]["title"] == "Deal"
     assert rendered["embed"]["description"] == "Limited offer"
     assert rendered["linkButtons"][0]["url"].startswith("https://")
+
+
+def test_render_post_bounds_imported_fallback_title():
+    value = replace(creative("1"), advertiser_name="A" * 400)
+    rendered = render_post(value)
+
+    assert len(rendered["embed"]["title"]) == 256
+    assert rendered["embed"]["title"] == "A" * 256
+
+
+def test_render_post_rejects_non_https_or_credential_urls():
+    with pytest.raises(ValueError, match="image URL must use a valid https URL"):
+        render_post(replace(creative("1"), image_url="http://www.awin1.com/image"))
+
+    with pytest.raises(ValueError, match="tracking URL must use a valid https URL"):
+        render_post(replace(creative("1"), tracking_url="http://www.awin1.com/offer"))
+
+    with pytest.raises(ValueError, match="must not contain URL credentials"):
+        render_post(
+            replace(
+                creative("1"),
+                tracking_url="https://user:password@www.awin1.com/offer",
+            )
+        )
 
 
 def test_post_state_round_trip_is_advertiser_scoped():
