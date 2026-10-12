@@ -9,7 +9,7 @@ description = "Standalone Awin Affiliate Skill for GamerHQ-compatible hosts"
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}
-authors = [{name = "GamerHQ"}]
+authors = [{name = "Duy Phan"}]
 
 [project.entry-points."gamerhq.skills"]
 awin-affiliate = "gamerhq_skill_awin_affiliate:create_skill"
