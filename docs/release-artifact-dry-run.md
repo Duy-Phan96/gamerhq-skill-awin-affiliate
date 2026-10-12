@@ -26,13 +26,14 @@ The workflow:
 2. installs the pinned Python Packaging Authority build frontend;
 3. runs `python -m tools.release_preflight`;
 4. builds both artifact formats with `python -m build`;
-5. verifies wheel and source-distribution names, metadata and required contents;
-6. installs the wheel in a clean virtual environment;
-7. installs the source distribution in a separate clean virtual environment;
-8. imports the Skill outside the repository source tree;
-9. verifies distribution version, package `__version__`, Skill manifest version, Skill ID and Runtime API;
-10. writes `dist/SHA256SUMS.txt`;
-11. uploads the dry-run files as a short-lived GitHub Actions artifact.
+5. verifies filenames, package identity, author/license metadata and required contents;
+6. verifies the approved repository `LICENSE` is packaged consistently;
+7. installs the wheel in a clean virtual environment;
+8. installs the source distribution in a separate clean virtual environment;
+9. imports the Skill outside the repository source tree;
+10. verifies distribution version, package `__version__`, Skill manifest version, Skill ID and Runtime API;
+11. writes `dist/SHA256SUMS.txt`;
+12. uploads the dry-run files as a short-lived GitHub Actions artifact.
 
 ## Artifact verifier
 
@@ -55,15 +56,19 @@ The verifier checks:
 - exactly one wheel and one source distribution;
 - expected normalized filenames;
 - package name and version in wheel `METADATA` and source `PKG-INFO`;
+- approved package author `Duy Phan`;
+- approved MIT license metadata;
 - `py3-none-any` wheel tagging;
 - required runtime modules in the wheel;
+- the wheel license file matches the repository `LICENSE`;
 - required source, documentation, tests and release tools in the source distribution;
-- inclusion of `LICENSE` in the source distribution once an approved file exists.
+- the source-distribution license matches the repository `LICENSE`.
 
 ## Source-distribution contents
 
 `MANIFEST.in` defines the repository-owned source-distribution additions:
 
+- approved `LICENSE`;
 - core project documentation;
 - detailed docs;
 - offline tests;
@@ -90,7 +95,8 @@ The final `1.0.0` release workflow may reuse these proven steps only after:
 
 - Issue #18 live acceptance passes;
 - the redacted acceptance report is approved;
-- Issue #23 resolves license identity and distribution;
+- the approved MIT/Duy Phan/GitHub Release only baseline remains intact;
+- Issue #33 branch protection is enabled or explicitly excepted by the owner;
 - the stable release preflight passes;
 - the dedicated release PR and post-merge CI are green;
 - the exact final `main` commit has a successful artifact dry-run result.
