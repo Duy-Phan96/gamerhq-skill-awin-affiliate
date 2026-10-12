@@ -6,6 +6,11 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 
 ## [Unreleased]
 
+### Added
+
+- Added a complete host-neutral Management API contract reference with request fields, response shapes, side effects, validation behavior and compatibility notes for every manifest-declared contract.
+- Added a regression test that keeps the documented Management contract inventory synchronized with the executable manifest.
+
 ### Remaining Skill-owned work before 1.0
 
 - Execute the documented live acceptance runbook with a dedicated test Awin account or non-production credentials where practical.
