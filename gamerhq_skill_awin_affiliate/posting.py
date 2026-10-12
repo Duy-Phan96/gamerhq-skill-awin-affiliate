@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import secrets
 from typing import Any, Iterable, Mapping
+from urllib.parse import urlparse
 
 from .models import Creative, CreativeState
 
@@ -83,6 +84,16 @@ def select_creative(
     return PostSelection(eligible[0], normalized_mode)
 
 
+def _validated_https_url(value: str, *, label: str) -> str:
+    raw = str(value).strip()
+    parsed = urlparse(raw)
+    if parsed.scheme != "https" or not parsed.hostname:
+        raise ValueError(f"{label} must use a valid https URL.")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError(f"{label} must not contain URL credentials.")
+    return raw
+
+
 def render_post(
     creative: Creative,
     *,
@@ -96,9 +107,18 @@ def render_post(
     if len(clean_text) > 2000:
         raise ValueError("Post text must be at most 2000 characters.")
 
+    image_url = _validated_https_url(creative.image_url, label="Creative image URL")
+    tracking_url = _validated_https_url(
+        creative.tracking_url,
+        label="Creative tracking URL",
+    )
+    resolved_title = str(
+        clean_title or creative.advertiser_name or creative.title or "Awin offer"
+    )[:256]
+
     embed: dict[str, Any] = {
-        "title": clean_title or creative.advertiser_name or creative.title or "Awin offer",
-        "image": {"url": creative.image_url},
+        "title": resolved_title,
+        "image": {"url": image_url},
     }
     description = clean_text or creative.description
     if description:
@@ -111,7 +131,7 @@ def render_post(
         "linkButtons": (
             {
                 "label": "View offer",
-                "url": creative.tracking_url,
+                "url": tracking_url,
             },
         ),
     }
