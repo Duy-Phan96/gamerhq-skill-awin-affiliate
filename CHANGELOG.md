@@ -10,6 +10,19 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 
 - Execute the documented live acceptance runbook with a dedicated test Awin account or non-production credentials where practical.
 - Complete the final 1.0 compatibility baseline review after that acceptance passes.
+- Confirm the intended legal/license identity before publishing stable release artifacts.
+
+## [0.9.3]
+
+- Added one per-guild campaign-store mutation boundary while retaining per-campaign execution locks, preventing lost campaign rotation and delivery-history updates across concurrent campaigns.
+- Serialized Run Now/scheduled execution against pause, edit and delete for the same campaign so in-flight runs cannot resurrect or overwrite newer management state.
+- Added best-effort persisted-state compensation when campaign scheduler mutations fail.
+- Added deterministic concurrency regression tests for parallel campaign runs and run-versus-pause/update/delete behavior.
+- Required HTTPS Awin tracking/image URLs at import time and rejected URL credentials.
+- Added render-time HTTPS validation for persisted Creative URLs.
+- Bounded imported fallback titles to Discord's embed-title limit.
+- Expanded CI to Python 3.12, 3.13 and 3.14 and verified an installed built wheel outside the source tree.
+- Added a verified project-status/roadmap document and documented the 0.9.3 data-integrity milestone.
 
 ## [0.9.2]
 
