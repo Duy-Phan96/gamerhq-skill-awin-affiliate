@@ -18,12 +18,17 @@ ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_NAME = "gamerhq-skill-awin-affiliate"
 NORMALIZED_NAME = "gamerhq_skill_awin_affiliate"
 VERSION = "0.9.3"
+AUTHOR = "Duy Phan"
+LICENSE_NAME = "MIT"
+LICENSE_BYTES = (ROOT / "LICENSE").read_bytes()
 
 
 def _write_wheel(
     dist: Path,
     *,
     metadata_version: str = VERSION,
+    metadata_author: str = AUTHOR,
+    metadata_license: str = LICENSE_NAME,
     omit: str | None = None,
 ) -> Path:
     path = dist / f"{NORMALIZED_NAME}-{VERSION}-py3-none-any.whl"
@@ -32,9 +37,11 @@ def _write_wheel(
         **{member: b"# synthetic test member\n" for member in REQUIRED_WHEEL_MEMBERS},
         f"{dist_info}/METADATA": (
             f"Metadata-Version: 2.4\nName: {PACKAGE_NAME}\n"
-            f"Version: {metadata_version}\n"
+            f"Version: {metadata_version}\nAuthor: {metadata_author}\n"
+            f"License: {metadata_license}\n"
         ).encode(),
         f"{dist_info}/WHEEL": b"Wheel-Version: 1.0\nTag: py3-none-any\n",
+        f"{dist_info}/licenses/LICENSE": LICENSE_BYTES,
     }
     if omit is not None:
         members.pop(omit, None)
@@ -48,6 +55,8 @@ def _write_sdist(
     dist: Path,
     *,
     metadata_version: str = VERSION,
+    metadata_author: str = AUTHOR,
+    metadata_license: str = LICENSE_NAME,
     omit: str | None = None,
 ) -> Path:
     path = dist / f"{NORMALIZED_NAME}-{VERSION}.tar.gz"
@@ -56,9 +65,11 @@ def _write_sdist(
         **{member: b"# synthetic test member\n" for member in REQUIRED_SDIST_MEMBERS},
         "PKG-INFO": (
             f"Metadata-Version: 2.4\nName: {PACKAGE_NAME}\n"
-            f"Version: {metadata_version}\n"
+            f"Version: {metadata_version}\nAuthor: {metadata_author}\n"
+            f"License: {metadata_license}\n"
         ).encode(),
     }
+    members["LICENSE"] = LICENSE_BYTES
     if omit is not None:
         members.pop(omit, None)
     with tarfile.open(path, mode="w:gz") as archive:
@@ -74,6 +85,7 @@ def _artifact_root(tmp_path: Path) -> tuple[Path, Path]:
     dist = root / "dist"
     dist.mkdir(parents=True)
     shutil.copy2(ROOT / "pyproject.toml", root / "pyproject.toml")
+    shutil.copy2(ROOT / "LICENSE", root / "LICENSE")
     return root, dist
 
 
@@ -93,6 +105,30 @@ def test_release_artifacts_reject_wrong_wheel_metadata(tmp_path: Path):
     errors = collect_artifact_errors(root, dist)
 
     assert any("Wheel metadata mismatch" in error for error in errors)
+
+
+def test_release_artifacts_reject_wrong_legal_metadata(tmp_path: Path):
+    root, dist = _artifact_root(tmp_path)
+    _write_wheel(dist, metadata_author="GamerHQ", metadata_license="Apache-2.0")
+    _write_sdist(dist, metadata_author="GamerHQ", metadata_license="Apache-2.0")
+
+    errors = collect_artifact_errors(root, dist)
+
+    assert any("Wheel author mismatch" in error for error in errors)
+    assert any("Wheel license mismatch" in error for error in errors)
+    assert any("Source-distribution author mismatch" in error for error in errors)
+    assert any("Source-distribution license mismatch" in error for error in errors)
+
+
+def test_release_artifacts_reject_missing_wheel_license(tmp_path: Path):
+    root, dist = _artifact_root(tmp_path)
+    dist_info = f"{NORMALIZED_NAME}-{VERSION}.dist-info"
+    _write_wheel(dist, omit=f"{dist_info}/licenses/LICENSE")
+    _write_sdist(dist)
+
+    errors = collect_artifact_errors(root, dist)
+
+    assert any("dist-info/licenses/LICENSE" in error for error in errors)
 
 
 def test_release_artifacts_reject_missing_source_member(tmp_path: Path):

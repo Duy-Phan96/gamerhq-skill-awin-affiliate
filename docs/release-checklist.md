@@ -63,6 +63,7 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Release-preflight drift tests cover package versions and stable-license requirements.
 - [ ] Artifact-verifier tests reject missing files and incorrect metadata.
 - [ ] Checksum-generation tests cover wheel and source distribution.
+- [ ] License/distribution regression tests match `docs/legal-and-distribution.md`.
 
 ## CI and artifacts
 
@@ -100,13 +101,21 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Real provider payloads fit the documented compatibility candidate or an explicit repository-owned adjustment is completed.
 - [ ] No unresolved Skill-owned functional/security blocker remains.
 
-## Owner release decisions
+## Approved legal and distribution baseline
 
-- [ ] Issue #23 identifies the intended license.
-- [ ] Copyright holder/legal identity is confirmed.
-- [ ] Approved `LICENSE` file exists.
-- [ ] Initial distribution channel is confirmed.
-- [ ] PyPI ownership/trusted publishing is configured when PyPI is selected.
+- [ ] Root `LICENSE` is the approved MIT text.
+- [ ] Copyright notice is `Copyright (c) 2026 Duy Phan`.
+- [ ] Package author metadata names `Duy Phan`.
+- [ ] `docs/legal-and-distribution.md` matches the release preparation.
+- [ ] Initial distribution remains **GitHub Release only**.
+- [ ] Wheel, source distribution and `SHA256SUMS.txt` are attached to the GitHub Release.
+- [ ] No PyPI credentials, workflow or publication are included in the 1.0 release.
+
+## Repository protection
+
+- [ ] Issue #33 branch protection is enabled, or the owner records an explicit temporary exception before the release PR.
+- [ ] Required checks match the current workflow names.
+- [ ] Force pushes and deletion of `main` are blocked when branch protection is enabled.
 
 ## Stable release publication
 
@@ -117,7 +126,7 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Release-artifact dry run passes on the exact release-candidate commit.
 - [ ] Immutable `v<version>` tag points to the reviewed `main` commit.
 - [ ] GitHub Release exists.
-- [ ] Wheel and source distribution are attached or otherwise published through the approved channel.
+- [ ] Wheel, source distribution and checksums are attached to the GitHub Release.
 - [ ] Published artifact checksums match the reviewed dry-run/release build.
 - [ ] Release notes include public-contract, migration, security and known-limitation impact.
 - [ ] Release notes state that this Skill release does not authorize a downstream GamerHQ deployment.

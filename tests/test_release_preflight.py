@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _copy_preflight_files(target: Path) -> None:
     (target / "docs").mkdir(parents=True)
-    for relative in ("pyproject.toml", "README.md", "CHANGELOG.md"):
+    for relative in ("pyproject.toml", "README.md", "CHANGELOG.md", "LICENSE"):
         shutil.copy2(ROOT / relative, target / relative)
     shutil.copy2(
         ROOT / "docs" / "management-api-contracts.md",
@@ -55,6 +55,29 @@ def test_release_preflight_detects_package_version_drift(tmp_path: Path):
     )
 
     assert any("Version identity drift" in error for error in errors)
+
+
+def test_release_preflight_detects_legal_identity_drift(tmp_path: Path):
+    _copy_preflight_files(tmp_path)
+    pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        pyproject.replace('authors = [{name = "Duy Phan"}]', 'authors = [{name = "GamerHQ"}]'),
+        encoding="utf-8",
+    )
+    (tmp_path / "LICENSE").write_text(
+        (tmp_path / "LICENSE")
+        .read_text(encoding="utf-8")
+        .replace("Copyright (c) 2026 Duy Phan", "Copyright (c) 2026 Someone Else"),
+        encoding="utf-8",
+    )
+
+    errors = collect_release_preflight_errors(
+        tmp_path,
+        identity=load_runtime_identity(),
+    )
+
+    assert any("Package author mismatch" in error for error in errors)
+    assert any("approved notice" in error for error in errors)
 
 
 def _stable_identity():
@@ -93,18 +116,19 @@ def _prepare_stable_metadata(tmp_path: Path) -> None:
 
 def test_stable_release_requires_license_and_non_blocked_status(tmp_path: Path):
     _prepare_stable_metadata(tmp_path)
+    (tmp_path / "LICENSE").unlink()
+
     errors = collect_release_preflight_errors(
         tmp_path,
         identity=_stable_identity(),
     )
 
-    assert "Stable 1.x release candidates require an approved LICENSE file." in errors
+    assert "Missing required file: LICENSE" in errors
     assert not any("Version identity drift" in error for error in errors)
 
 
 def test_stable_release_accepts_license_after_owner_decision(tmp_path: Path):
     _prepare_stable_metadata(tmp_path)
-    (tmp_path / "LICENSE").write_text("Approved license text\n", encoding="utf-8")
 
     assert collect_release_preflight_errors(
         tmp_path,

@@ -12,6 +12,9 @@ EXPECTED_PACKAGE_NAME = "gamerhq-skill-awin-affiliate"
 EXPECTED_SKILL_ID = "awin-affiliate"
 EXPECTED_ENTRY_POINT = "gamerhq_skill_awin_affiliate:create_skill"
 EXPECTED_RUNTIME_API = "1"
+EXPECTED_LICENSE = "MIT"
+EXPECTED_AUTHOR = "Duy Phan"
+EXPECTED_COPYRIGHT_NOTICE = "Copyright (c) 2026 Duy Phan"
 CONTRACT_HEADING = re.compile(r"^## `([^`]+)`$", flags=re.MULTILINE)
 STABLE_VERSION = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 
@@ -88,6 +91,26 @@ def _is_stable_one_x_or_newer(version: str) -> bool:
     return bool(match and int(match.group(1)) >= 1)
 
 
+def _license_name(project: dict) -> str:
+    value = project.get("license")
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        return str(value.get("text", "")).strip()
+    return ""
+
+
+def _author_names(project: dict) -> tuple[str, ...]:
+    values = project.get("authors")
+    if not isinstance(values, list):
+        return ()
+    return tuple(
+        str(item.get("name", "")).strip()
+        for item in values
+        if isinstance(item, dict) and str(item.get("name", "")).strip()
+    )
+
+
 def collect_release_preflight_errors(
     root: Path,
     *,
@@ -107,6 +130,8 @@ def collect_release_preflight_errors(
 
     package_name = str(project.get("name", "")).strip()
     package_version = str(project.get("version", "")).strip()
+    license_name = _license_name(project)
+    authors = _author_names(project)
     skill_id = str(gamerhq.get("skill-id", "")).strip()
     runtime_api = str(gamerhq.get("runtime-api", "")).strip()
     capabilities_raw = gamerhq.get("capabilities", ())
@@ -130,6 +155,27 @@ def collect_release_preflight_errors(
         )
     if not package_version:
         errors.append("pyproject.toml project.version is missing.")
+    if license_name != EXPECTED_LICENSE:
+        errors.append(
+            f"License metadata mismatch: expected {EXPECTED_LICENSE!r}, got {license_name!r}."
+        )
+    if authors != (EXPECTED_AUTHOR,):
+        errors.append(
+            f"Package author mismatch: expected {(EXPECTED_AUTHOR,)!r}, got {authors!r}."
+        )
+
+    license_text = _read_text(root, "LICENSE", errors)
+    if license_text:
+        if not license_text.startswith("MIT License\n"):
+            errors.append("LICENSE is not the approved MIT license text.")
+        if EXPECTED_COPYRIGHT_NOTICE not in license_text:
+            errors.append(
+                f"LICENSE is missing the approved notice: {EXPECTED_COPYRIGHT_NOTICE}."
+            )
+        if "Permission is hereby granted, free of charge" not in license_text:
+            errors.append("LICENSE is missing the MIT permission grant.")
+        if 'THE SOFTWARE IS PROVIDED "AS IS"' not in license_text:
+            errors.append("LICENSE is missing the MIT warranty disclaimer.")
 
     versions = {
         "pyproject.toml": package_version,
@@ -201,8 +247,6 @@ def collect_release_preflight_errors(
         )
 
     if _is_stable_one_x_or_newer(package_version):
-        if not (root / "LICENSE").is_file():
-            errors.append("Stable 1.x release candidates require an approved LICENSE file.")
         if "BLOCKED BY LIVE ACCEPTANCE" in readme:
             errors.append(
                 "Stable 1.x release candidates cannot retain the BLOCKED BY LIVE ACCEPTANCE state."

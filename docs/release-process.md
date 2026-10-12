@@ -42,6 +42,24 @@ from gamerhq_skill_awin_affiliate import __version__
 
 `pyproject.toml`, `__version__`, and every runtime-visible Skill manifest must agree.
 
+## Approved legal and distribution baseline
+
+The repository owner approved the following baseline for the first stable release:
+
+```text
+License: MIT
+Copyright holder: Duy Phan
+Package author: Duy Phan
+Initial distribution: GitHub Release only
+PyPI: deferred
+```
+
+The authoritative legal notice is the repository-root `LICENSE` file.
+
+The detailed decision record is `docs/legal-and-distribution.md`.
+
+PyPI is not part of the `1.0.0` release. A future PyPI publication requires a separate owner decision covering package ownership, trusted publishing or credentials, support expectations and rollback.
+
 ## Normal change workflow
 
 1. Create or identify a clear Issue for substantial work.
@@ -155,7 +173,8 @@ Do not prepare or merge the final `1.0.0` release PR until:
 - no unresolved Skill-owned functional/security blocker remains;
 - `docs/management-api-contracts.md` is accepted as the stable V1 baseline;
 - storage, secret and scheduler identities are accepted;
-- Issue #23 license identity and distribution decisions are resolved;
+- the approved MIT / Duy Phan / GitHub Release only baseline is implemented;
+- the approved `LICENSE` file exists and package author metadata names Duy Phan;
 - Issue #33 branch protection is enabled, or the owner records an explicit temporary exception before the release PR;
 - release checklist is complete.
 
@@ -177,7 +196,7 @@ Required changes:
 - update version assertions/tests;
 - promote the matching `CHANGELOG.md` section;
 - update project status from blocked to ready/released as appropriate;
-- add or update the approved `LICENSE` file;
+- confirm the approved MIT `LICENSE` and Duy Phan package-author metadata remain unchanged;
 - confirm README and contract documentation reflect the release;
 - run `python -m tools.release_preflight`;
 - run the release-artifact dry run;
@@ -193,7 +212,7 @@ After the release PR is merged and post-merge `main` CI is green:
 3. verify the tag points to that commit;
 4. create a GitHub Release from the tag;
 5. attach the wheel and source distribution;
-6. include checksums where practical;
+6. attach `SHA256SUMS.txt` or publish equivalent checksums;
 7. publish concise release notes with compatibility, security and migration impact;
 8. state explicitly that downstream hosts choose their own adoption/deployment timing.
 
@@ -201,14 +220,17 @@ Do not move an existing release tag.
 
 ## PyPI
 
-PyPI publication is optional and remains blocked until Issue #23 explicitly confirms:
+PyPI is deliberately deferred and is not part of the `1.0.0` release.
+
+A future PyPI publication requires a separate owner decision confirming:
 
 - package-name ownership;
-- publisher account/organization;
+- publisher account or organization;
 - trusted publishing or secure release credentials;
-- support and rollback expectations.
+- support expectations;
+- rollback and correction procedures.
 
-A GitHub Release with tested artifacts is a valid initial distribution model.
+No PyPI credential, publication workflow or package upload should be added to the first stable release.
 
 ## Release notes template
 
