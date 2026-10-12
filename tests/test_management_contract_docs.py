@@ -36,4 +36,6 @@ def test_critical_contract_rules_are_explicitly_documented():
     assert "`groups` is always the numeric count" in text
     assert "Detailed rows are always in `groupResults`" in text
     assert "no raw Awin token" in text
-    assert "one aggregate campaign-store lock per guild" in text
+    assert "different campaigns may send concurrently" in text
+    assert "aggregate state/history commits are serialized per guild" in text
+    assert "serialized against another execution or management mutation" in text
