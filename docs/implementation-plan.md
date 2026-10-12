@@ -113,36 +113,38 @@ Status: initial hardening implemented in 0.9.1 and offline acceptance implemente
 
 ## 0.9.3 — Data integrity and release hardening
 
-Status: in progress under Issue #19.
+Status: completed under Issue #19.
 
 Objective: close the remaining Skill-owned technical release blockers without adding new product scope.
 
-Committed work:
+Delivered:
 
 - one consistent per-guild campaign-store mutation boundary;
 - retained per-campaign send serialization;
 - concurrency tests for parallel campaign runs and management mutations;
-- no lost campaign state or delivery-history rows;
-- HTTPS-only outbound Creative URLs;
+- no lost campaign state or delivery-history rows in the covered concurrency scenarios;
+- run-versus-pause/update/delete serialization for the same campaign;
+- best-effort persisted-state compensation after scheduler mutation failures;
+- HTTPS-only imported and rendered Creative URLs;
 - Discord-safe title limits for imported fallback metadata;
-- release-artifact and compatibility CI checks where repository-owned;
+- wheel-build and compatibility CI on Python 3.12, 3.13 and 3.14;
 - verified project status and 1.0 milestone documentation.
 
-Acceptance criteria:
+Verified acceptance:
 
 - parallel campaign runs preserve every campaign update and history row;
 - run-versus-pause/update/delete cannot resurrect or overwrite newer state;
 - failed sends do not advance rotation;
 - Preview Next remains non-mutating;
 - storage keys and public Management API IDs remain unchanged;
-- Python 3.12 and 3.14 CI pass;
-- no unresolved P0/P1 Skill-owned release blocker remains before live acceptance.
+- Python 3.12, 3.13 and 3.14 CI pass;
+- built wheel imports successfully outside the source tree.
 
 ## Live provider acceptance
 
-Status: blocked by 0.9.3; tracked by Issue #18.
+Status: ready to execute; tracked by Issue #18.
 
-After 0.9.3, execute `docs/live-acceptance.md` with a real test/non-production Awin publisher account where practical. Live acceptance validates provider payloads, permissions, Discord rendering and restart recovery that offline fakes cannot prove.
+Execute `docs/live-acceptance.md` with a real test/non-production Awin publisher account where practical. Live acceptance validates provider payloads, permissions, Discord rendering and restart recovery that offline fakes cannot prove.
 
 ## 1.0.0 — Stable public contract
 
@@ -150,10 +152,10 @@ Status: planned.
 
 Entry criteria:
 
-- 0.9.3 complete;
 - live acceptance complete;
 - public Management API IDs and storage/secret/scheduler identities accepted as the stable V1 baseline;
 - release checklist complete;
-- final package build and CI green.
+- final package build and CI green;
+- intended license identity and distribution channel confirmed.
 
 No new provider features are required for 1.0.
