@@ -19,6 +19,7 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 - Added a non-publishing release-artifact dry run that builds, inspects and clean-install-tests both wheel and source distribution artifacts.
 - Added deterministic artifact-content verification, SHA-256 checksum generation and short-lived GitHub Actions artifact upload.
 - Added an explicit source-distribution manifest and artifact-verifier regression tests.
+- Added regression coverage for exact post-merge `main` release evidence and owner-controlled 1.0 gates.
 
 ### Changed
 
@@ -27,6 +28,9 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 - Updated project status and README so the remaining 1.0 gates are explicit: live provider acceptance plus the owner license/distribution decision.
 - Centralized the package-owned runtime version and aligned the base, hardened and exported Skill manifests.
 - CI now runs the release preflight before building the wheel and verifies installed distribution metadata against the package version constant.
+- Synchronized the release process with the implemented pull-request, exact-`main` and manual artifact-workflow triggers.
+- Documented that release-readiness claims require exact post-merge `main` artifact evidence, not only pull-request evidence.
+- Added main branch protection or an explicit temporary owner exception to the documented 1.0 entry gates.
 
 ### Remaining Skill-owned work before 1.0
 
@@ -34,6 +38,7 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 - Complete and approve the redacted live-acceptance report.
 - Complete the final 1.0 compatibility baseline review after that acceptance passes.
 - Resolve Issue #23 and add the approved legal/license identity before publishing stable release artifacts.
+- Resolve Issue #33 by enabling main branch protection or recording an explicit temporary owner exception before the final release PR.
 
 ## [0.9.3]
 
@@ -104,7 +109,7 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 
 - Added Creative Library filtering and pagination.
 - Added Creative previews.
-- Added single/multi-select and advertiser-wide enable/disable controls.
+- Added single, multi-select and advertiser-wide enable/disable controls.
 - Added shared per-guild mutation locking for Creative state.
 
 ## [0.3.0]
