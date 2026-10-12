@@ -98,10 +98,9 @@ Status: diagnostics/hardening foundation implemented in 0.8.0.
 
 Awin Affiliate must continue to operate when Recurring Posts is not installed.
 
-
 ## 1.0 readiness hardening
 
-Status: implemented in 0.9.1.
+Status: initial hardening implemented in 0.9.1 and offline acceptance implemented in 0.9.2.
 
 - strict boolean validation for campaign create payloads
 - strict boolean validation when loading persisted Campaign and Creative state
@@ -109,5 +108,52 @@ Status: implemented in 0.9.1.
 - stale persisted blocked reasons are not exposed after Creative recovery
 - campaign list returns the same derived status/count model as campaign detail
 - focused regression tests cover malformed booleans and stale/recovered campaign state
+- complete offline V1 management-flow acceptance
+- saved My Creative import result shape stabilized as numeric `groups` plus `groupResults`
 
-Remaining Skill-owned pre-1.0 validation is live provider acceptance and the final public-contract/storage review.
+## 0.9.3 — Data integrity and release hardening
+
+Status: in progress under Issue #19.
+
+Objective: close the remaining Skill-owned technical release blockers without adding new product scope.
+
+Committed work:
+
+- one consistent per-guild campaign-store mutation boundary;
+- retained per-campaign send serialization;
+- concurrency tests for parallel campaign runs and management mutations;
+- no lost campaign state or delivery-history rows;
+- HTTPS-only outbound Creative URLs;
+- Discord-safe title limits for imported fallback metadata;
+- release-artifact and compatibility CI checks where repository-owned;
+- verified project status and 1.0 milestone documentation.
+
+Acceptance criteria:
+
+- parallel campaign runs preserve every campaign update and history row;
+- run-versus-pause/update/delete cannot resurrect or overwrite newer state;
+- failed sends do not advance rotation;
+- Preview Next remains non-mutating;
+- storage keys and public Management API IDs remain unchanged;
+- Python 3.12 and 3.14 CI pass;
+- no unresolved P0/P1 Skill-owned release blocker remains before live acceptance.
+
+## Live provider acceptance
+
+Status: blocked by 0.9.3; tracked by Issue #18.
+
+After 0.9.3, execute `docs/live-acceptance.md` with a real test/non-production Awin publisher account where practical. Live acceptance validates provider payloads, permissions, Discord rendering and restart recovery that offline fakes cannot prove.
+
+## 1.0.0 — Stable public contract
+
+Status: planned.
+
+Entry criteria:
+
+- 0.9.3 complete;
+- live acceptance complete;
+- public Management API IDs and storage/secret/scheduler identities accepted as the stable V1 baseline;
+- release checklist complete;
+- final package build and CI green.
+
+No new provider features are required for 1.0.
