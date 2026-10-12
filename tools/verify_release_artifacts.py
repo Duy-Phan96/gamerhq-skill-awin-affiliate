@@ -12,6 +12,8 @@ from typing import Sequence
 
 EXPECTED_SKILL_ID = "awin-affiliate"
 EXPECTED_RUNTIME_API = "1"
+EXPECTED_AUTHOR = "Duy Phan"
+EXPECTED_LICENSE = "MIT"
 REQUIRED_WHEEL_MEMBERS = (
     "gamerhq_skill_awin_affiliate/__init__.py",
     "gamerhq_skill_awin_affiliate/_version.py",
@@ -19,6 +21,7 @@ REQUIRED_WHEEL_MEMBERS = (
     "gamerhq_skill_awin_affiliate/skill.py",
 )
 REQUIRED_SDIST_MEMBERS = (
+    "LICENSE",
     "pyproject.toml",
     "README.md",
     "CHANGELOG.md",
@@ -30,11 +33,13 @@ REQUIRED_SDIST_MEMBERS = (
     "docs/live-acceptance.md",
     "docs/release-process.md",
     "docs/release-checklist.md",
+    "docs/legal-and-distribution.md",
     "gamerhq_skill_awin_affiliate/__init__.py",
     "gamerhq_skill_awin_affiliate/_version.py",
     "gamerhq_skill_awin_affiliate/hardened_skill.py",
     "tests/test_contract.py",
     "tests/test_release_preflight.py",
+    "tests/test_license_distribution.py",
     "tools/release_preflight.py",
     "tools/verify_release_artifacts.py",
 )
@@ -46,9 +51,17 @@ def _project_identity(root: Path) -> tuple[str, str]:
     return str(project["name"]), str(project["version"])
 
 
-def _metadata_headers(text: str) -> tuple[str, str]:
+def _metadata_identity(text: str) -> tuple[str, str, str, str]:
     message = Parser().parsestr(text)
-    return str(message.get("Name", "")).strip(), str(message.get("Version", "")).strip()
+    license_name = str(
+        message.get("License-Expression") or message.get("License") or ""
+    ).strip()
+    return (
+        str(message.get("Name", "")).strip(),
+        str(message.get("Version", "")).strip(),
+        str(message.get("Author", "")).strip(),
+        license_name,
+    )
 
 
 def _one(paths: list[Path], label: str, errors: list[str]) -> Path | None:
@@ -58,9 +71,36 @@ def _one(paths: list[Path], label: str, errors: list[str]) -> Path | None:
     return paths[0]
 
 
+def _verify_metadata(
+    metadata: str,
+    *,
+    label: str,
+    package_name: str,
+    version: str,
+    errors: list[str],
+) -> None:
+    actual_name, actual_version, actual_author, actual_license = _metadata_identity(
+        metadata
+    )
+    if actual_name != package_name or actual_version != version:
+        errors.append(
+            f"{label} metadata mismatch: "
+            f"Name={actual_name!r}, Version={actual_version!r}."
+        )
+    if actual_author != EXPECTED_AUTHOR:
+        errors.append(
+            f"{label} author mismatch: expected {EXPECTED_AUTHOR!r}, got {actual_author!r}."
+        )
+    if actual_license != EXPECTED_LICENSE:
+        errors.append(
+            f"{label} license mismatch: expected {EXPECTED_LICENSE!r}, got {actual_license!r}."
+        )
+
+
 def _verify_wheel(
     wheel: Path,
     *,
+    root: Path,
     package_name: str,
     version: str,
     errors: list[str],
@@ -71,6 +111,12 @@ def _verify_wheel(
         errors.append(
             f"Wheel filename mismatch: expected {expected_name!r}, got {wheel.name!r}."
         )
+
+    try:
+        expected_license = (root / "LICENSE").read_bytes()
+    except OSError as exc:
+        errors.append(f"Repository LICENSE cannot be read: {exc}.")
+        expected_license = b""
 
     try:
         with zipfile.ZipFile(wheel) as archive:
@@ -88,12 +134,13 @@ def _verify_wheel(
                 )
             else:
                 metadata = archive.read(metadata_files[0]).decode("utf-8")
-                actual_name, actual_version = _metadata_headers(metadata)
-                if actual_name != package_name or actual_version != version:
-                    errors.append(
-                        "Wheel metadata mismatch: "
-                        f"Name={actual_name!r}, Version={actual_version!r}."
-                    )
+                _verify_metadata(
+                    metadata,
+                    label="Wheel",
+                    package_name=package_name,
+                    version=version,
+                    errors=errors,
+                )
 
             wheel_files = [
                 member for member in members if member.endswith(".dist-info/WHEEL")
@@ -104,6 +151,18 @@ def _verify_wheel(
                 wheel_metadata = archive.read(wheel_files[0]).decode("utf-8")
                 if "Tag: py3-none-any" not in wheel_metadata:
                     errors.append("Wheel is not tagged as py3-none-any.")
+
+            license_files = [
+                member
+                for member in members
+                if member.endswith(".dist-info/licenses/LICENSE")
+            ]
+            if len(license_files) != 1:
+                errors.append(
+                    "Wheel must contain exactly one .dist-info/licenses/LICENSE file."
+                )
+            elif expected_license and archive.read(license_files[0]) != expected_license:
+                errors.append("Wheel LICENSE content differs from the repository LICENSE.")
     except (OSError, zipfile.BadZipFile, UnicodeDecodeError) as exc:
         errors.append(f"Wheel cannot be inspected: {exc}.")
 
@@ -124,6 +183,12 @@ def _verify_sdist(
         )
 
     try:
+        expected_license = (root / "LICENSE").read_bytes()
+    except OSError as exc:
+        errors.append(f"Repository LICENSE cannot be read: {exc}.")
+        expected_license = b""
+
+    try:
         with tarfile.open(sdist, mode="r:gz") as archive:
             names = archive.getnames()
             top_levels = {name.split("/", 1)[0] for name in names if name}
@@ -138,10 +203,7 @@ def _verify_sdist(
                 for name in names
                 if name.startswith(f"{top_level}/")
             }
-            required = set(REQUIRED_SDIST_MEMBERS)
-            if (root / "LICENSE").is_file():
-                required.add("LICENSE")
-            missing = sorted(required - relative_members)
+            missing = sorted(set(REQUIRED_SDIST_MEMBERS) - relative_members)
             if missing:
                 errors.append(
                     f"Source distribution is missing required members: {missing}."
@@ -156,12 +218,25 @@ def _verify_sdist(
                 errors.append("Source distribution is missing PKG-INFO.")
             else:
                 pkg_info = pkg_info_file.read().decode("utf-8")
-                actual_name, actual_version = _metadata_headers(pkg_info)
-                if actual_name != package_name or actual_version != version:
-                    errors.append(
-                        "Source-distribution metadata mismatch: "
-                        f"Name={actual_name!r}, Version={actual_version!r}."
-                    )
+                _verify_metadata(
+                    pkg_info,
+                    label="Source-distribution",
+                    package_name=package_name,
+                    version=version,
+                    errors=errors,
+                )
+
+            license_name = f"{top_level}/LICENSE"
+            try:
+                license_file = archive.extractfile(license_name)
+            except KeyError:
+                license_file = None
+            if license_file is None:
+                errors.append("Source distribution is missing LICENSE.")
+            elif expected_license and license_file.read() != expected_license:
+                errors.append(
+                    "Source-distribution LICENSE content differs from the repository LICENSE."
+                )
     except (OSError, tarfile.TarError, UnicodeDecodeError) as exc:
         errors.append(f"Source distribution cannot be inspected: {exc}.")
 
@@ -185,6 +260,7 @@ def collect_artifact_errors(root: Path, dist: Path) -> tuple[str, ...]:
     if wheel is not None:
         _verify_wheel(
             wheel,
+            root=root,
             package_name=package_name,
             version=version,
             errors=errors,
