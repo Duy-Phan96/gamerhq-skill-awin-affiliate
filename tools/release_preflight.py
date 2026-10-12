@@ -20,10 +20,13 @@ STABLE_VERSION = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 class RuntimeIdentity:
     package_constant: str
     exported_manifest_version: str
+    hardened_manifest_version: str
     base_manifest_version: str
     exported_skill_id: str
+    hardened_skill_id: str
     base_skill_id: str
     exported_runtime_api: str
+    hardened_runtime_api: str
     base_runtime_api: str
     permissions: tuple[str, ...]
     management_contract_ids: tuple[str, ...]
@@ -31,19 +34,26 @@ class RuntimeIdentity:
 
 def load_runtime_identity() -> RuntimeIdentity:
     from gamerhq_skill_awin_affiliate import AwinAffiliateSkill, __version__
+    from gamerhq_skill_awin_affiliate.hardened_skill import (
+        AwinAffiliateSkill as HardenedAwinAffiliateSkill,
+    )
     from gamerhq_skill_awin_affiliate.skill import (
         AwinAffiliateSkill as BaseAwinAffiliateSkill,
     )
 
     exported = AwinAffiliateSkill.manifest
+    hardened = HardenedAwinAffiliateSkill.manifest
     base = BaseAwinAffiliateSkill.manifest
     return RuntimeIdentity(
         package_constant=__version__,
         exported_manifest_version=exported.version,
+        hardened_manifest_version=hardened.version,
         base_manifest_version=base.version,
         exported_skill_id=exported.id,
+        hardened_skill_id=hardened.id,
         base_skill_id=base.id,
         exported_runtime_api=exported.runtime_api_version,
+        hardened_runtime_api=hardened.runtime_api_version,
         base_runtime_api=base.runtime_api_version,
         permissions=tuple(exported.permissions),
         management_contract_ids=tuple(
@@ -125,6 +135,7 @@ def collect_release_preflight_errors(
         "pyproject.toml": package_version,
         "package __version__": identity.package_constant,
         "exported Skill manifest": identity.exported_manifest_version,
+        "hardened Skill manifest": identity.hardened_manifest_version,
         "base Skill manifest": identity.base_manifest_version,
     }
     if len(set(versions.values())) != 1:
@@ -134,6 +145,7 @@ def collect_release_preflight_errors(
     skill_ids = {
         "pyproject.toml": skill_id,
         "exported Skill manifest": identity.exported_skill_id,
+        "hardened Skill manifest": identity.hardened_skill_id,
         "base Skill manifest": identity.base_skill_id,
     }
     if set(skill_ids.values()) != {EXPECTED_SKILL_ID}:
@@ -143,6 +155,7 @@ def collect_release_preflight_errors(
     runtime_apis = {
         "pyproject.toml": runtime_api,
         "exported Skill manifest": identity.exported_runtime_api,
+        "hardened Skill manifest": identity.hardened_runtime_api,
         "base Skill manifest": identity.base_runtime_api,
     }
     if set(runtime_apis.values()) != {EXPECTED_RUNTIME_API}:
