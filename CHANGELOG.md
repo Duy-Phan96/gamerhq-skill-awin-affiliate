@@ -16,6 +16,9 @@ The project follows semantic versioning while pre-1.0 contracts are still being 
 - Added Issue #23 to capture the owner decision for legal/license identity and the initial 1.0 distribution channel without guessing either choice.
 - Added a repository-local release preflight that validates package/manifest identity, Runtime metadata, entry points, capabilities, README/changelog version state and Management contract documentation.
 - Added regression tests proving version drift is rejected and stable 1.x candidates require an approved `LICENSE` file.
+- Added a non-publishing release-artifact dry run that builds, inspects and clean-install-tests both wheel and source distribution artifacts.
+- Added deterministic artifact-content verification, SHA-256 checksum generation and short-lived GitHub Actions artifact upload.
+- Added an explicit source-distribution manifest and artifact-verifier regression tests.
 
 ### Changed
 
