@@ -1,0 +1,8 @@
+# Repository owner and final review visibility.
+* @Duy-Phan96
+
+# Security and release-governance changes always surface to the owner.
+SECURITY.md @Duy-Phan96
+.github/workflows/ @Duy-Phan96
+tools/ @Duy-Phan96
+docs/release-*.md @Duy-Phan96
