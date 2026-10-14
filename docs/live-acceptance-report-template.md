@@ -1,6 +1,6 @@
 # Awin Affiliate live acceptance report
 
-> Copy this template for one controlled acceptance run. Record only redacted outcomes and safe evidence references. Never include tokens, encryption keys, private `.env` values, database contents or raw private logs.
+> Copy this template to `docs/live-acceptance-report.md` for one controlled acceptance run. Record only redacted outcomes and safe evidence references. Never include tokens, encryption keys, private `.env` values, database contents or raw private logs.
 
 ## 1. Run metadata
 
@@ -277,3 +277,23 @@ Approved by:
 Passing this report authorizes preparation of the **Skill repository's** `1.0.0` release only.
 
 It does not authorize, schedule or imply a GamerHQ Host or production-server deployment.
+
+## 16. Machine-readable release attestation
+
+Fill this block only after every required section passes and the report is approved. Stable `1.x` release preflight reads these exact keys from `docs/live-acceptance-report.md`.
+
+```text
+LIVE_ACCEPTANCE_STATUS=PASS
+LIVE_ACCEPTANCE_APPROVED_BY=<real owner/reviewer identity>
+LIVE_ACCEPTANCE_APPROVED_AT=YYYY-MM-DD
+LIVE_ACCEPTANCE_REVIEWED_COMMIT=<lowercase 40-character immutable commit SHA>
+```
+
+Rules:
+
+- keep `LIVE_ACCEPTANCE_STATUS=PASS` only for an actually passed and approved run;
+- use a real approver identity, not a role or placeholder;
+- use an ISO date in `YYYY-MM-DD` format;
+- record the exact immutable Skill commit that was accepted;
+- save the completed report as `docs/live-acceptance-report.md`;
+- never include a token, encryption key, private environment value or raw private log.
