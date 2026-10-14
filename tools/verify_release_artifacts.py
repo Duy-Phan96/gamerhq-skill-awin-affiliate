@@ -31,6 +31,7 @@ REQUIRED_SDIST_MEMBERS = (
     "MANIFEST.in",
     "docs/management-api-contracts.md",
     "docs/live-acceptance.md",
+    "docs/live-acceptance-report-template.md",
     "docs/release-process.md",
     "docs/release-checklist.md",
     "docs/legal-and-distribution.md",
@@ -40,6 +41,7 @@ REQUIRED_SDIST_MEMBERS = (
     "tests/test_contract.py",
     "tests/test_release_preflight.py",
     "tests/test_license_distribution.py",
+    "tools/live_acceptance_attestation.py",
     "tools/release_preflight.py",
     "tools/verify_release_artifacts.py",
 )
