@@ -4,7 +4,7 @@ This is the final repository-local acceptance procedure before considering the S
 
 It validates the Skill against a real Awin publisher account without changing another repository.
 
-Use `docs/live-acceptance-report-template.md` for the run record. Copy the template for one controlled test and record only redacted PASS/FAIL evidence.
+The current controlled run is recorded in `docs/live-acceptance-report.md` on the dedicated acceptance branch. Use `docs/live-acceptance-report-template.md` only when starting a new run. Record only redacted PASS/FAIL evidence.
 
 ## Preconditions
 
@@ -215,7 +215,7 @@ Expected:
 
 The acceptance passes when:
 
-- all required sections in the report template are `PASS`;
+- all required sections in `docs/live-acceptance-report.md` are `PASS`;
 - tested public contracts behave as documented in `docs/management-api-contracts.md`;
 - no real credential/private value appears in output, logs or persisted normal Skill storage;
 - restart recovery produces no duplicate jobs or sends;
@@ -264,7 +264,8 @@ After this runbook passes:
 - confirm stable storage/secret keys;
 - confirm the scheduler handler/job identity;
 - confirm Runtime API compatibility;
-- resolve Issue #23 for the legal/license identity and distribution channel;
+- confirm Issue #23 remains resolved for MIT / Duy Phan / GitHub Release only;
+- resolve Issue #33 by enabling branch protection or recording an explicit temporary owner exception;
 - complete `docs/release-checklist.md`;
 - prepare a separate `1.0.0` release PR according to `docs/release-process.md`.
 
