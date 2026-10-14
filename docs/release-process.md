@@ -95,7 +95,12 @@ The preflight verifies:
 - capability metadata versus the executable manifest;
 - README and changelog version state;
 - exact Management API documentation inventory;
-- an approved `LICENSE` file and non-blocked README status for stable `1.x` candidates.
+- approved MIT legal/package identity;
+- a non-blocked README status for stable `1.x` candidates;
+- a completed `docs/live-acceptance-report.md` for stable `1.x` candidates;
+- a machine-readable live-acceptance attestation with `PASS`, a real approver, ISO approval date and immutable 40-character commit SHA.
+
+The live-acceptance report requirement is intentionally enforced only for stable `1.x` candidates. Pre-1.0 development remains able to run without a completed report.
 
 CI runs this command before building the wheel. A release PR must not bypass or weaken these checks to make an inconsistent candidate pass.
 
@@ -164,12 +169,34 @@ This workflow is verification only. It must not create a tag, GitHub Release, Py
 
 See `docs/release-artifact-dry-run.md` for details.
 
+## Live acceptance evidence
+
+Execute `docs/live-acceptance.md` and copy `docs/live-acceptance-report-template.md` to:
+
+```text
+docs/live-acceptance-report.md
+```
+
+The completed report must contain only redacted evidence and must finish with the exact machine-readable keys:
+
+```text
+LIVE_ACCEPTANCE_STATUS=PASS
+LIVE_ACCEPTANCE_APPROVED_BY=<real owner/reviewer identity>
+LIVE_ACCEPTANCE_APPROVED_AT=YYYY-MM-DD
+LIVE_ACCEPTANCE_REVIEWED_COMMIT=<lowercase 40-character immutable commit SHA>
+```
+
+The stable release preflight validates this block. A missing report, non-PASS result, placeholder approver, invalid date or invalid commit SHA blocks a stable `1.x` candidate.
+
+Do not set the attestation to PASS until the real provider/host run is complete and approved. The attestation is release evidence, not a substitute for the detailed report.
+
 ## 1.0.0 entry gates
 
 Do not prepare or merge the final `1.0.0` release PR until:
 
 - Issue #18 live acceptance is complete;
-- the acceptance report records a PASS;
+- `docs/live-acceptance-report.md` exists and records a PASS;
+- its machine-readable attestation is complete and approved;
 - no unresolved Skill-owned functional/security blocker remains;
 - `docs/management-api-contracts.md` is accepted as the stable V1 baseline;
 - storage, secret and scheduler identities are accepted;
@@ -197,6 +224,7 @@ Required changes:
 - promote the matching `CHANGELOG.md` section;
 - update project status from blocked to ready/released as appropriate;
 - confirm the approved MIT `LICENSE` and Duy Phan package-author metadata remain unchanged;
+- confirm `docs/live-acceptance-report.md` is present and approved;
 - confirm README and contract documentation reflect the release;
 - run `python -m tools.release_preflight`;
 - run the release-artifact dry run;
