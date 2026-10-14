@@ -9,7 +9,7 @@
 | Date | `2026-10-14` |
 | Tester | `Duy Phan` |
 | Skill version | `0.9.3` |
-| Skill commit | `1579ca91d3007c7059153685d301ef960afdc726` |
+| Skill commit | `efdfc37256f69b1f868e6355c0d7906e0f85d078` |
 | Runtime API | `1` |
 | Compatible host/version | `TO BE RECORDED DURING LIVE RUN` |
 | Discord environment | `TO BE RECORDED — isolated test server/channel` |
@@ -18,14 +18,15 @@
 
 ### Automated baseline evidence
 
-- Post-merge Skill CI run: `38281257762` — Python 3.12 / 3.13 / 3.14 PASS
-- Exact-main artifact run: `38281257893` — PASS
+- Post-merge Skill CI run: `38552179168` — Python 3.12 / 3.13 / 3.14 PASS
+- Exact-main artifact run: `38552179150` — PASS
 - Release preflight: PASS
 - Wheel and source distribution build: PASS
 - Clean wheel install: PASS
 - Clean source-distribution install: PASS
-- Temporary artifact: `awin-affiliate-release-dry-run-1579ca91d3007c7059153685d301ef960afdc726`
-- Artifact digest: `sha256:6de4c371e7693abe3878156ca728775397b11b5d5a65fe03b4f71ff4a18d47c4`
+- Temporary artifact: `awin-affiliate-release-dry-run-efdfc37256f69b1f868e6355c0d7906e0f85d078`
+- Artifact digest: `sha256:de0cd39d3509d2fe970cf2df5f06a0176ce82f8a95e652ab603c1e9dec02c9a7`
+- Stable-release live-acceptance attestation gate: implemented and verified
 - License: MIT
 - Copyright holder/package author: Duy Phan
 - Initial distribution: GitHub Release only; PyPI deferred
@@ -54,7 +55,7 @@ Expected:
 - Skill ID: `awin-affiliate`
 - version: `0.9.3`
 - Runtime API: `1`
-- reviewed commit: `1579ca91d3007c7059153685d301ef960afdc726`
+- reviewed commit: `efdfc37256f69b1f868e6355c0d7906e0f85d078`
 
 Observed:
 
@@ -302,7 +303,7 @@ This block is intentionally non-passing while the live run is incomplete. Replac
 LIVE_ACCEPTANCE_STATUS=IN_PROGRESS
 LIVE_ACCEPTANCE_APPROVED_BY=PENDING
 LIVE_ACCEPTANCE_APPROVED_AT=PENDING
-LIVE_ACCEPTANCE_REVIEWED_COMMIT=1579ca91d3007c7059153685d301ef960afdc726
+LIVE_ACCEPTANCE_REVIEWED_COMMIT=efdfc37256f69b1f868e6355c0d7906e0f85d078
 ```
 
 The stable `1.x` release preflight must continue to reject this report until:
