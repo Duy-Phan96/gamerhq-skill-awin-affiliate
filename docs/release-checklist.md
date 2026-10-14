@@ -61,6 +61,7 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Complete offline V1 acceptance flow.
 - [ ] Management-contract documentation inventory matches the manifest.
 - [ ] Release-preflight drift tests cover package versions and stable-license requirements.
+- [ ] Stable-release preflight tests reject missing, non-PASS and placeholder live-acceptance attestations.
 - [ ] Artifact-verifier tests reject missing files and incorrect metadata.
 - [ ] Checksum-generation tests cover wheel and source distribution.
 - [ ] License/distribution regression tests match `docs/legal-and-distribution.md`.
@@ -89,7 +90,8 @@ The detailed workflow is in `docs/release-process.md`.
 
 - [ ] Issue #18 uses the exact reviewed Skill commit/version.
 - [ ] `docs/live-acceptance.md` is executed on an isolated compatible host.
-- [ ] `docs/live-acceptance-report-template.md` is completed with redacted evidence.
+- [ ] `docs/live-acceptance-report-template.md` is copied to `docs/live-acceptance-report.md`.
+- [ ] `docs/live-acceptance-report.md` contains only redacted evidence.
 - [ ] Real token verification and publisher selection pass.
 - [ ] Joined advertiser discovery passes.
 - [ ] Real My Creative HTML import passes.
@@ -100,6 +102,10 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Diagnostics contain no credential material.
 - [ ] Real provider payloads fit the documented compatibility candidate or an explicit repository-owned adjustment is completed.
 - [ ] No unresolved Skill-owned functional/security blocker remains.
+- [ ] `LIVE_ACCEPTANCE_STATUS=PASS` is recorded only after the complete run passes.
+- [ ] `LIVE_ACCEPTANCE_APPROVED_BY` contains a real approver identity.
+- [ ] `LIVE_ACCEPTANCE_APPROVED_AT` uses `YYYY-MM-DD`.
+- [ ] `LIVE_ACCEPTANCE_REVIEWED_COMMIT` contains the accepted lowercase 40-character commit SHA.
 
 ## Approved legal and distribution baseline
 
@@ -123,6 +129,7 @@ The detailed workflow is in `docs/release-process.md`.
 - [ ] Changelog entry is final.
 - [ ] Package metadata, package `__version__`, and every runtime-visible manifest report the same version.
 - [ ] README no longer reports `BLOCKED BY LIVE ACCEPTANCE` for a stable 1.x candidate.
+- [ ] Stable preflight accepts the approved `docs/live-acceptance-report.md` attestation.
 - [ ] Release-artifact dry run passes on the exact release-candidate commit.
 - [ ] Immutable `v<version>` tag points to the reviewed `main` commit.
 - [ ] GitHub Release exists.

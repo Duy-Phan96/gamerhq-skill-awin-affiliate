@@ -18,6 +18,13 @@ from tools.release_preflight import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+VALID_LIVE_ACCEPTANCE_REPORT = """# Awin Affiliate live acceptance report
+
+LIVE_ACCEPTANCE_STATUS=PASS
+LIVE_ACCEPTANCE_APPROVED_BY=Duy Phan
+LIVE_ACCEPTANCE_APPROVED_AT=2026-10-14
+LIVE_ACCEPTANCE_REVIEWED_COMMIT=0123456789abcdef0123456789abcdef01234567
+"""
 
 
 def _copy_preflight_files(target: Path) -> None:
@@ -112,6 +119,10 @@ def _prepare_stable_metadata(tmp_path: Path) -> None:
         changelog.replace("## [0.9.3]", "## [1.0.0]\n\n## [0.9.3]", 1),
         encoding="utf-8",
     )
+    (tmp_path / "docs" / "live-acceptance-report.md").write_text(
+        VALID_LIVE_ACCEPTANCE_REPORT,
+        encoding="utf-8",
+    )
 
 
 def test_stable_release_requires_license_and_non_blocked_status(tmp_path: Path):
@@ -127,7 +138,62 @@ def test_stable_release_requires_license_and_non_blocked_status(tmp_path: Path):
     assert not any("Version identity drift" in error for error in errors)
 
 
-def test_stable_release_accepts_license_after_owner_decision(tmp_path: Path):
+def test_stable_release_requires_completed_live_acceptance_report(tmp_path: Path):
+    _prepare_stable_metadata(tmp_path)
+    (tmp_path / "docs" / "live-acceptance-report.md").unlink()
+
+    errors = collect_release_preflight_errors(
+        tmp_path,
+        identity=_stable_identity(),
+    )
+
+    assert any("require an approved docs/live-acceptance-report.md" in error for error in errors)
+
+
+def test_stable_release_rejects_non_pass_live_acceptance(tmp_path: Path):
+    _prepare_stable_metadata(tmp_path)
+    report = tmp_path / "docs" / "live-acceptance-report.md"
+    report.write_text(
+        VALID_LIVE_ACCEPTANCE_REPORT.replace(
+            "LIVE_ACCEPTANCE_STATUS=PASS",
+            "LIVE_ACCEPTANCE_STATUS=BLOCKED",
+        ),
+        encoding="utf-8",
+    )
+
+    errors = collect_release_preflight_errors(
+        tmp_path,
+        identity=_stable_identity(),
+    )
+
+    assert "Live acceptance status must be PASS for a stable 1.x release." in errors
+
+
+def test_stable_release_rejects_placeholder_acceptance_metadata(tmp_path: Path):
+    _prepare_stable_metadata(tmp_path)
+    report = tmp_path / "docs" / "live-acceptance-report.md"
+    report.write_text(
+        """# Awin Affiliate live acceptance report
+
+LIVE_ACCEPTANCE_STATUS=PASS
+LIVE_ACCEPTANCE_APPROVED_BY=<owner/reviewer>
+LIVE_ACCEPTANCE_APPROVED_AT=YYYY-MM-DD
+LIVE_ACCEPTANCE_REVIEWED_COMMIT=<40-character SHA>
+""",
+        encoding="utf-8",
+    )
+
+    errors = collect_release_preflight_errors(
+        tmp_path,
+        identity=_stable_identity(),
+    )
+
+    assert "Live acceptance approver must be a real, non-placeholder identity." in errors
+    assert "Live acceptance approval date must use ISO format YYYY-MM-DD." in errors
+    assert "Live acceptance reviewed commit must be a lowercase 40-character SHA." in errors
+
+
+def test_stable_release_accepts_approved_license_and_live_acceptance(tmp_path: Path):
     _prepare_stable_metadata(tmp_path)
 
     assert collect_release_preflight_errors(

@@ -31,6 +31,7 @@ REQUIRED_SDIST_MEMBERS = (
     "MANIFEST.in",
     "docs/management-api-contracts.md",
     "docs/live-acceptance.md",
+    "docs/live-acceptance-report-template.md",
     "docs/release-process.md",
     "docs/release-checklist.md",
     "docs/legal-and-distribution.md",
@@ -40,6 +41,7 @@ REQUIRED_SDIST_MEMBERS = (
     "tests/test_contract.py",
     "tests/test_release_preflight.py",
     "tests/test_license_distribution.py",
+    "tools/live_acceptance_attestation.py",
     "tools/release_preflight.py",
     "tools/verify_release_artifacts.py",
 )
@@ -203,7 +205,10 @@ def _verify_sdist(
                 for name in names
                 if name.startswith(f"{top_level}/")
             }
-            missing = sorted(set(REQUIRED_SDIST_MEMBERS) - relative_members)
+            required_members = set(REQUIRED_SDIST_MEMBERS)
+            if (root / "docs" / "live-acceptance-report.md").is_file():
+                required_members.add("docs/live-acceptance-report.md")
+            missing = sorted(required_members - relative_members)
             if missing:
                 errors.append(
                     f"Source distribution is missing required members: {missing}."
