@@ -141,6 +141,21 @@ def test_release_artifacts_reject_missing_source_member(tmp_path: Path):
     assert any("docs/release-process.md" in error for error in errors)
 
 
+def test_sdist_requires_completed_report_when_repository_has_one(tmp_path: Path):
+    root, dist = _artifact_root(tmp_path)
+    (root / "docs").mkdir()
+    (root / "docs" / "live-acceptance-report.md").write_text(
+        "LIVE_ACCEPTANCE_STATUS=PASS\n",
+        encoding="utf-8",
+    )
+    _write_wheel(dist)
+    _write_sdist(dist)
+
+    errors = collect_artifact_errors(root, dist)
+
+    assert any("docs/live-acceptance-report.md" in error for error in errors)
+
+
 def test_checksum_file_covers_wheel_and_sdist(tmp_path: Path):
     root, dist = _artifact_root(tmp_path)
     wheel = _write_wheel(dist)
