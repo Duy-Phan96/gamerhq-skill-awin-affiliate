@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from tools.live_acceptance_attestation import collect_live_acceptance_errors
+
 EXPECTED_PACKAGE_NAME = "gamerhq-skill-awin-affiliate"
 EXPECTED_SKILL_ID = "awin-affiliate"
 EXPECTED_ENTRY_POINT = "gamerhq_skill_awin_affiliate:create_skill"
@@ -251,6 +253,7 @@ def collect_release_preflight_errors(
             errors.append(
                 "Stable 1.x release candidates cannot retain the BLOCKED BY LIVE ACCEPTANCE state."
             )
+        errors.extend(collect_live_acceptance_errors(root))
 
     return tuple(errors)
 
