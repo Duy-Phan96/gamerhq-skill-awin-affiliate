@@ -205,7 +205,10 @@ def _verify_sdist(
                 for name in names
                 if name.startswith(f"{top_level}/")
             }
-            missing = sorted(set(REQUIRED_SDIST_MEMBERS) - relative_members)
+            required_members = set(REQUIRED_SDIST_MEMBERS)
+            if (root / "docs" / "live-acceptance-report.md").is_file():
+                required_members.add("docs/live-acceptance-report.md")
+            missing = sorted(required_members - relative_members)
             if missing:
                 errors.append(
                     f"Source distribution is missing required members: {missing}."
